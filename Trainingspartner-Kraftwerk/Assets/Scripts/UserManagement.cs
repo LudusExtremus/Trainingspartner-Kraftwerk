@@ -5,12 +5,15 @@ using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using System;
 using System.Collections;
+using System.IO;
 
 public class UserManagement : MonoBehaviour {
 
     public GameObject userNickInput;
     public GameObject userTrainingStartInput;
     public GameObject userAboutInput;
+
+    public Image userImage;
 
     // Use this for initialization
     void Start () {
@@ -72,6 +75,15 @@ public class UserManagement : MonoBehaviour {
             });
             while (!task.IsCompleted) yield return null;
             updateUI(task, ParseUser.CurrentUser);
+            ParseFile pictureFile = (ParseFile)ParseUser.CurrentUser["picture"];
+            var pictureRequest = new WWW(pictureFile.Url.AbsoluteUri);
+            yield return pictureRequest;
+            Texture2D texture = new Texture2D(200, 200);
+            pictureRequest.LoadImageIntoTexture(texture);
+            byte[] bytes = texture.EncodeToJPG();
+            File.WriteAllBytes(Application.dataPath + "/Resources/SavedFoto.jpg", bytes);
+            Sprite image = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
+            userImage.overrideSprite = image;
         }
     }
 
@@ -122,6 +134,7 @@ public class UserManagement : MonoBehaviour {
         {
             ParseUser.CurrentUser["about"] = userAboutInput.GetComponent<InputField>().text;
             ParseUser.CurrentUser["startDate"] = userTrainingStartInput.GetComponent<InputField>().text;
+            ParseUser.CurrentUser["nick"] = userNickInput.GetComponent<InputField>().text;
             Task task = ParseUser.CurrentUser.SaveAsync();
             task.ContinueWith(t =>
             {
@@ -156,5 +169,39 @@ public class UserManagement : MonoBehaviour {
         while (!task.IsCompleted) yield return null;
         updateUI(task, null);
     }
+    
+    public void uploadImage()
+    {
+        StartCoroutine(UploadPlayerFile((response) => {
+            if (response == 1)
+                Debug.Log("Upload complete");
+            else
+                Debug.LogError("The file could not be uploaded");
+        }));
+    }
 
+    IEnumerator UploadPlayerFile(Action<int> callback)
+    {
+        byte[] fileBytes = System.IO.File.ReadAllBytes(Application.dataPath + "/Resources/Foto.jpg");
+        ParseFile file = new ParseFile("Foto.jpg", fileBytes, "image/jpeg");
+
+        var saveTask = file.SaveAsync();
+
+        while (!saveTask.IsCompleted)
+            yield return null;
+
+        if (saveTask.IsFaulted)
+        {
+            Debug.LogError("An error occurred while uploading the player file : " + saveTask.Exception.Message);
+            callback(-1);
+        }
+        else
+        {
+            ParseUser.CurrentUser["picture"] = file;
+            ParseUser.CurrentUser.SaveAsync();
+            Debug.Log("picture save success ");
+            callback(1);
+        }
+    }
+    
 }
