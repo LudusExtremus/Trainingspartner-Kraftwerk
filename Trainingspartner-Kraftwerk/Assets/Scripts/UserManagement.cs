@@ -78,11 +78,9 @@ public class UserManagement : MonoBehaviour {
             ParseFile pictureFile = (ParseFile)ParseUser.CurrentUser["picture"];
             var pictureRequest = new WWW(pictureFile.Url.AbsoluteUri);
             yield return pictureRequest;
-            Texture2D texture = new Texture2D(200, 200);
-            pictureRequest.LoadImageIntoTexture(texture);
-            byte[] bytes = texture.EncodeToJPG();
+            byte[] bytes = pictureRequest.texture.EncodeToJPG();
             File.WriteAllBytes(Application.dataPath + "/Resources/SavedFoto.jpg", bytes);
-            Sprite image = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
+            Sprite image = Sprite.Create(pictureRequest.texture, new Rect(0, 0, pictureRequest.texture.width, pictureRequest.texture.height), new Vector2(0.5f, 0.5f));
             userImage.overrideSprite = image;
         }
     }
