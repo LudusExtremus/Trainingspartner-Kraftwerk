@@ -5,6 +5,8 @@ using System.Collections;
 
 public class NewsEntryButton : MonoBehaviour {
 
+    //Public Deklaration aller Variablen die die NewsEntry Prefabs haben sollen
+
     public Image button;
     public Image newsIcon;
     public Image buttonImageTop;
