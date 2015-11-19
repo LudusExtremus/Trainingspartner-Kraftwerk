@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using System;
 using System.Collections;
 using System.IO;
+using System.Collections.Generic;
 
 public class UserManagement : MonoBehaviour {
 
@@ -13,16 +14,28 @@ public class UserManagement : MonoBehaviour {
     public GameObject userTrainingStartInput;
     public GameObject userAboutInput;
 
+    Dictionary<string, bool> timeTable = new Dictionary<string, bool>();
+
     public Image userImage;
 
     // Use this for initialization
     void Start () {
+        Dictionary<string, string> time = ParseUser.CurrentUser.Get<Dictionary<string, string>>("timetable");
+        foreach (var key in time.Keys)
+        {
+            Debug.Log("Key: " + key + " Value: " + time[key].ToString());
+        }
         if (ParseUser.CurrentUser != null)
         {
             userNickInput.GetComponent<InputField>().text = (String)ParseUser.CurrentUser["nick"];
             userTrainingStartInput.GetComponent<InputField>().text = (String)ParseUser.CurrentUser["startDate"];
             userAboutInput.GetComponent<InputField>().text = (String)ParseUser.CurrentUser["about"];
-        }
+        };
+        /*
+        timeTable.Add("Monday_Morning",true);
+        timeTable.Add("Monday_Noon", false);
+        timeTable.Add("Monday_Evening", true);
+        */
     }
 	
 	// Update is called once per frame
@@ -133,6 +146,8 @@ public class UserManagement : MonoBehaviour {
             ParseUser.CurrentUser["about"] = userAboutInput.GetComponent<InputField>().text;
             ParseUser.CurrentUser["startDate"] = userTrainingStartInput.GetComponent<InputField>().text;
             ParseUser.CurrentUser["nick"] = userNickInput.GetComponent<InputField>().text;
+
+            ParseUser.CurrentUser["timetable"] = timeTable;
             Task task = ParseUser.CurrentUser.SaveAsync();
             task.ContinueWith(t =>
             {
