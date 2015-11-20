@@ -16,8 +16,8 @@ public class UserManagement : MonoBehaviour {
     public GameObject userAboutInput;
 
     // Dictionary<string, bool> timeTable = new Dictionary<string, bool>();
-
-    private List<string> categories = new List<String>{"boulder"}; // user categories
+    List<string> times = new List<string>() { "Mon_Mor", "Mon_Eve", "Mon_Noon", "Tue_Mor", "Tue_Eve", "Tue_Noon", "Wed_Mor", "Wed_Eve", "Wed_Noon", "Thu_Mor", "Thu_Eve", "Thu_Noon", "Fri_Mor", "Fri_Eve", "Fri_Noon", "Sat_Mor", "Sat_Eve", "Sat_Noon", "Sun_Mor", "Sun_Eve", "Sun_Noon" };
+    private List<string> categories = new List<String>{"boulder"}; // selected user categories
 
     public Image userImage;
     // Use this for initialization
@@ -42,6 +42,8 @@ public class UserManagement : MonoBehaviour {
         timeTable.Add("Monday_Evening", true);
         */
         
+        //updateTimeTable(times);
+        queryTimeTable();
     }
 	
 	// Update is called once per frame
@@ -49,33 +51,42 @@ public class UserManagement : MonoBehaviour {
         
     }
 
-    public void updateTimeTable(List<string> time)
+    public void updateTimeTable(List<string> times)
     {
         ParseObject timeTable = ParseUser.CurrentUser.Get<ParseObject>("timetable");
-        timeTable["times"] = time;
+        foreach(string time in times){
+            timeTable[time] = false;
+        }
+        //timeTable["times"] = time;
         timeTable.SaveAsync();
     }   
 
     public void queryTimeTable()
     {
-        var q1 = ParseObject.GetQuery("Timetable").WhereEqualTo("times", "monday_morning");
-        var q2 = ParseObject.GetQuery("Timetable").WhereEqualTo("times", "tuesday_noon");
-        ParseQuery<ParseObject> query = q1.Or(q2);
-        query = query.Include("user");
+        ParseQuery<ParseObject> query = buildTimeTableQuery(new List<string>() { "Mon_Mor", "Tue_Eve" });
         query.FindAsync().ContinueWith(t =>
         {
             IEnumerable<ParseObject> timeTables = t.Result;
-            TimetableLoop: foreach (var userTimeTable in timeTables)
+            foreach (var userTimeTable in timeTables)
             {
                 ParseUser user = userTimeTable.Get<ParseUser>("user");
                 List<string> cats = user.Get<List<object>>("categories").Select(s => (string)s).ToList();
-                foreach(string cat in categories){
-                    if (!cats.Contains(cat))
-                        goto TimetableLoop;
-                }
-                Debug.Log("User: " + user["nick"] + cats.Contains("boulder"));
+                bool userContainsAnyCategory = cats.Any(s => categories.Contains(s)); 
+                if(userContainsAnyCategory)
+                    Debug.Log(user["nick"] + " contains any of: " + categories);
             }
         });
+    }
+
+    private ParseQuery<ParseObject> buildTimeTableQuery(List<string> times)
+    {
+        ParseQuery<ParseObject> query = new ParseQuery<ParseObject>("Timetable").WhereEqualTo(times[0], true);
+        for(int i = 1; i < times.Count; i++)
+        {
+            query.Or(new ParseQuery<ParseObject>("Timetable").WhereEqualTo(times[i], true));
+        }
+        query = query.Include("user");
+        return query;
     }
 
     public void registerUser()
