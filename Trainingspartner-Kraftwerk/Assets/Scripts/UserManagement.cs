@@ -16,7 +16,7 @@ public class UserManagement : MonoBehaviour {
     public GameObject userAboutInput;
 
     // Dictionary<string, bool> timeTable = new Dictionary<string, bool>();
-    List<string> times = new List<string>() { "Mon_Mor", "Mon_Eve", "Mon_Noon", "Tue_Mor", "Tue_Eve", "Tue_Noon", "Wed_Mor", "Wed_Eve", "Wed_Noon", "Thu_Mor", "Thu_Eve", "Thu_Noon", "Fri_Mor", "Fri_Eve", "Fri_Noon", "Sat_Mor", "Sat_Eve", "Sat_Noon", "Sun_Mor", "Sun_Eve", "Sun_Noon" };
+    //List<string> times = new List<string>() { "Mon_Mor", "Mon_Eve", "Mon_Noon", "Tue_Mor", "Tue_Eve", "Tue_Noon", "Wed_Mor", "Wed_Eve", "Wed_Noon", "Thu_Mor", "Thu_Eve", "Thu_Noon", "Fri_Mor", "Fri_Eve", "Fri_Noon", "Sat_Mor", "Sat_Eve", "Sat_Noon", "Sun_Mor", "Sun_Eve", "Sun_Noon" };
     private List<string> categories = new List<String>{"boulder"}; // selected user categories
 
     public Image userImage;
@@ -49,17 +49,7 @@ public class UserManagement : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
         
-    }
-
-    public void updateTimeTable(List<string> times)
-    {
-        ParseObject timeTable = ParseUser.CurrentUser.Get<ParseObject>("timetable");
-        foreach(string time in times){
-            timeTable[time] = false;
-        }
-        //timeTable["times"] = time;
-        timeTable.SaveAsync();
-    }   
+    } 
 
     public void queryTimeTable()
     {
@@ -209,14 +199,10 @@ public class UserManagement : MonoBehaviour {
         }
     }
 
-    IEnumerator updateAsync()
+    IEnumerator updateUserAsync()
     {
         if (ParseUser.CurrentUser != null)
         {
-            ParseUser.CurrentUser["about"] = userAboutInput.GetComponent<InputField>().text;
-            ParseUser.CurrentUser["startDate"] = userTrainingStartInput.GetComponent<InputField>().text;
-            ParseUser.CurrentUser["nick"] = userNickInput.GetComponent<InputField>().text;
-            ParseUser.CurrentUser["categories"] = categories;
             Task task = ParseUser.CurrentUser.SaveAsync();
             task.ContinueWith(t =>
             {
@@ -227,13 +213,64 @@ public class UserManagement : MonoBehaviour {
         }
     }
 
-    public void updateUser()
+    public void updateUser(ProfileDataType type, string value)
     {
-        if (ParseUser.CurrentUser != null)
+        switch (type)
         {
-            StartCoroutine(updateAsync());
+            case ProfileDataType.about:
+                ParseUser.CurrentUser["about"] = value;
+                break;
+            case ProfileDataType.climbingGrade:
+                ParseUser.CurrentUser["climbingGrade"] = value;
+                break;
+            case ProfileDataType.nickname:
+                ParseUser.CurrentUser["nick"] = value;
+                break;
+            case ProfileDataType.sportSince:
+                ParseUser.CurrentUser["startDate"] = value;
+                break;
         }
-            
+        StartCoroutine(updateUserAsync());
+    }
+    public void updateUserBool(ProfileDataType type, string value, bool active)
+    {
+        switch (type)
+        {
+            case ProfileDataType.sportCategory:
+                updateUserCategories(value,active);
+                break;
+            case ProfileDataType.timeTable:
+                updateUserTimeTable(value, active);
+                break;
+        }
+    }
+
+    private void updateUserTimeTable(string time, bool active)
+    {
+        ParseObject timeTable = ParseUser.CurrentUser.Get<ParseObject>("timetable");
+        timeTable[time] = active;
+        timeTable.SaveAsync();
+    }
+
+    private void updateUserCategories(string value, bool active)
+    {
+        List<string> categories = ParseUser.CurrentUser.Get<List<object>>("categories").Select(s => (string)s).ToList();
+        if (active)
+        {
+            if (!categories.Contains(value))
+            {
+                categories.Add(value);
+            }
+        }
+        else
+        {
+            if (categories.Contains(value))
+            {
+                categories.Remove(value);
+            }
+        }
+        ParseUser.CurrentUser["categories"] = categories;
+        StartCoroutine(updateUserAsync());
     }
 
     public void deleteUser()
