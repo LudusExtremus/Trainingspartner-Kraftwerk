@@ -12,8 +12,14 @@ using System.Linq;
 public class UserManagement : MonoBehaviour {
 
     public GameObject userNickInput;
+    public GameObject userClimbGradeInput;
     public GameObject userTrainingStartInput;
     public GameObject userAboutInput;
+
+    public GameObject categoryBoulderToggle;
+    public GameObject categoryRopeClimbToggle;
+
+    public GameObject timeTogglePanel;
 
     // Dictionary<string, bool> timeTable = new Dictionary<string, bool>();
     //List<string> times = new List<string>() { "Mon_Mor", "Mon_Eve", "Mon_Noon", "Tue_Mor", "Tue_Eve", "Tue_Noon", "Wed_Mor", "Wed_Eve", "Wed_Noon", "Thu_Mor", "Thu_Eve", "Thu_Noon", "Fri_Mor", "Fri_Eve", "Fri_Noon", "Sat_Mor", "Sat_Eve", "Sat_Noon", "Sun_Mor", "Sun_Eve", "Sun_Noon" };
@@ -41,9 +47,10 @@ public class UserManagement : MonoBehaviour {
         timeTable.Add("Monday_Noon", false);
         timeTable.Add("Monday_Evening", true);
         */
-        
+
         //updateTimeTable(times);
-        queryTimeTable();
+        //queryTimeTable();
+        updateProfileUI(ParseUser.CurrentUser);
     }
 	
 	// Update is called once per frame
@@ -147,7 +154,7 @@ public class UserManagement : MonoBehaviour {
                 Debug.Log("logged in? " + !t.IsFaulted);
             });
             while (!task.IsCompleted) yield return null;
-            updateUI(task, ParseUser.CurrentUser);
+            updateProfileUI( ParseUser.CurrentUser);
             ParseFile pictureFile = (ParseFile)ParseUser.CurrentUser["picture"];
             var pictureRequest = new WWW(pictureFile.Url.AbsoluteUri);
             yield return pictureRequest;
@@ -168,7 +175,7 @@ public class UserManagement : MonoBehaviour {
                 Debug.Log("logged out? " + !t.IsFaulted);
             });
             while (!task.IsCompleted) yield return null;
-            updateUI(task, ParseUser.CurrentUser);
+            updateProfileUI( ParseUser.CurrentUser);
         }
     }
 
@@ -181,7 +188,7 @@ public class UserManagement : MonoBehaviour {
         StartCoroutine(loginAsync());
     }
 
-    private void updateUI(Task task, ParseUser currentUser)
+    private void updateProfileUI(ParseUser currentUser)
     {
         if (currentUser != null)
         {
@@ -190,6 +197,19 @@ public class UserManagement : MonoBehaviour {
                 userTrainingStartInput.GetComponent<InputField>().text = (string)ParseUser.CurrentUser["startDate"];
             if(ParseUser.CurrentUser["about"] != null)
                 userAboutInput.GetComponent<InputField>().text = (string)ParseUser.CurrentUser["about"];
+            if (ParseUser.CurrentUser["climbingGrade"] != null)
+                userClimbGradeInput.GetComponent<InputField>().text = (string)ParseUser.CurrentUser["climbingGrade"];
+
+            List<string> categories = null;
+            if (ParseUser.CurrentUser["categories"].GetType() == typeof(List<object>))
+                categories = ParseUser.CurrentUser.Get<List<object>>("categories").Select(s => (string)s).ToList();
+            else
+                categories = ParseUser.CurrentUser.Get<List<string>>("categories").Select(s => (string)s).ToList();
+
+            categoryRopeClimbToggle.GetComponent<Toggle>().isOn = categories.Contains("ropeClimb");
+            categoryBoulderToggle.GetComponent<Toggle>().isOn = categories.Contains("boulder");
+
+            StartCoroutine(updateTimeTable());   
         }
         else
         {
@@ -199,78 +219,16 @@ public class UserManagement : MonoBehaviour {
         }
     }
 
-    IEnumerator updateUserAsync()
+    private IEnumerator updateTimeTable()
     {
-        if (ParseUser.CurrentUser != null)
+        ParseObject timeTable = (ParseObject)ParseUser.CurrentUser["timetable"];
+        Task task = timeTable.FetchIfNeededAsync();
+        while (!task.IsCompleted) yield return null;
+        foreach (Transform timeToggle in timeTogglePanel.transform)
         {
-            Task task = ParseUser.CurrentUser.SaveAsync();
-            task.ContinueWith(t =>
-            {
-                Debug.Log("update successful? " + !t.IsFaulted);
-            });
-            while (!task.IsCompleted) yield return null;
-            updateUI(task, ParseUser.CurrentUser);
+            bool isActive = (bool)timeTable[timeToggle.name];
+            timeToggle.gameObject.GetComponent<Toggle>().isOn = isActive;
         }
-    }
-
-    public void updateUser(ProfileDataType type, string value)
-    {
-        switch (type)
-        {
-            case ProfileDataType.about:
-                ParseUser.CurrentUser["about"] = value;
-                break;
-            case ProfileDataType.climbingGrade:
-                ParseUser.CurrentUser["climbingGrade"] = value;
-                break;
-            case ProfileDataType.nickname:
-                ParseUser.CurrentUser["nick"] = value;
-                break;
-            case ProfileDataType.sportSince:
-                ParseUser.CurrentUser["startDate"] = value;
-                break;
-        }
-        StartCoroutine(updateUserAsync());
-    }
-    public void updateUserBool(ProfileDataType type, string value, bool active)
-    {
-        switch (type)
-        {
-            case ProfileDataType.sportCategory:
-                updateUserCategories(value,active);
-                break;
-            case ProfileDataType.timeTable:
-                updateUserTimeTable(value, active);
-                break;
-        }
-    }
-
-    private void updateUserTimeTable(string time, bool active)
-    {
-        ParseObject timeTable = ParseUser.CurrentUser.Get<ParseObject>("timetable");
-        timeTable[time] = active;
-        timeTable.SaveAsync();
-    }
-
-    private void updateUserCategories(string value, bool active)
-    {
-        List<string> categories = ParseUser.CurrentUser.Get<List<object>>("categories").Select(s => (string)s).ToList();
-        if (active)
-        {
-            if (!categories.Contains(value))
-            {
-                categories.Add(value);
-            }
-        }
-        else
-        {
-            if (categories.Contains(value))
-            {
-                categories.Remove(value);
-            }
-        }
-        ParseUser.CurrentUser["categories"] = categories;
-        StartCoroutine(updateUserAsync());
     }
 
     public void deleteUser()
@@ -286,9 +244,9 @@ public class UserManagement : MonoBehaviour {
             Debug.Log("delete successful? " + !t.IsFaulted);
         });
         while (!task.IsCompleted) yield return null;
-        updateUI(task, null);
+        updateProfileUI( null);
     }
-    
+
     public void uploadImage()
     {
         StartCoroutine(UploadPlayerFile((response) => {
@@ -322,5 +280,168 @@ public class UserManagement : MonoBehaviour {
             callback(1);
         }
     }
-    
+
+    IEnumerator updateUserAsync()
+    {
+        if (ParseUser.CurrentUser != null)
+        {
+            Task task = ParseUser.CurrentUser.SaveAsync();
+            task.ContinueWith(t =>
+            {
+                Debug.Log("update successful? " + !t.IsFaulted);
+            });
+            while (!task.IsCompleted) yield return null;
+            updateProfileUI( ParseUser.CurrentUser);
+        }
+    }
+
+    public void updateUserAbout(string about)
+    {
+        ParseUser.CurrentUser["about"] = about;
+        StartCoroutine(updateUserAsync());
+    }
+    public void updateUserClimbGrade(string climbingGrade)
+    {
+        ParseUser.CurrentUser["climbingGrade"] = climbingGrade;
+        StartCoroutine(updateUserAsync());
+    }
+    public void updateUserNick(string nick)
+    {
+        ParseUser.CurrentUser["nick"] = nick;
+        StartCoroutine(updateUserAsync());
+    }
+    public void updateUserSportSince(string startDate)
+    {
+        ParseUser.CurrentUser["startDate"] = startDate;
+        StartCoroutine(updateUserAsync());
+    }
+
+    public void updateUserRopeClimb(bool active)
+    {
+        updateUserCategories("ropeClimb",active);
+    }
+    public void updateUserBoulder(bool active)
+    {
+        updateUserCategories("boulder", active);
+    }
+    private void updateUserCategories(string value, bool active)
+    {
+        List<string> categories = null;
+        if (ParseUser.CurrentUser["categories"].GetType() == typeof(List<object>))
+            categories = ParseUser.CurrentUser.Get<List<object>>("categories").Select(s => (string)s).ToList();
+        else
+            categories = ParseUser.CurrentUser.Get<List<string>>("categories").Select(s => (string)s).ToList();
+        if (active)
+        {
+            if (!categories.Contains(value))
+            {
+                categories.Add(value);
+            }
+            else
+                return;
+        }
+        else
+        {
+            if (categories.Contains(value))
+            {
+                categories.Remove(value);
+            }
+            else
+                return;
+        }
+        ParseUser.CurrentUser["categories"] = categories;
+        StartCoroutine(updateUserAsync());
+    }
+
+    private void updateUserTimeTable(string time, bool active)
+    {
+        ParseObject timeTable = ParseUser.CurrentUser.Get<ParseObject>("timetable");
+        timeTable[time] = active;
+        timeTable.SaveAsync();
+    }
+    public void updateUserTimeMon_Mor(bool active)
+    {
+        updateUserTimeTable("Mon_Mor", active);
+    }
+    public void updateUserTimeMon_Eve(bool active)
+    {
+        updateUserTimeTable("Mon_Eve", active);
+    }
+    public void updateUserTimeMon_Noon(bool active)
+    {
+        updateUserTimeTable("Mon_Noon", active);
+    }
+    public void updateUserTimeTue_Mor(bool active)
+    {
+        updateUserTimeTable("Tue_Mor", active);
+    }
+    public void updateUserTimeTue_Eve(bool active)
+    {
+        updateUserTimeTable("Tue_Eve", active);
+    }
+    public void updateUserTimeTue_Noon(bool active)
+    {
+        updateUserTimeTable("Tue_Noon", active);
+    }
+    public void updateUserTimeWed_Mor(bool active)
+    {
+        updateUserTimeTable("Wed_Mor", active);
+    }
+    public void updateUserTimeWed_Eve(bool active)
+    {
+        updateUserTimeTable("Wed_Eve", active);
+    }
+    public void updateUserTimeWed_Noon(bool active)
+    {
+        updateUserTimeTable("Wed_Noon", active);
+    }
+    public void updateUserTimeThu_Mor(bool active)
+    {
+        updateUserTimeTable("Thu_Mor", active);
+    }
+    public void updateUserTimeThu_Eve(bool active)
+    {
+        updateUserTimeTable("Thu_Eve", active);
+    }
+    public void updateUserTimeThu_Noon(bool active)
+    {
+        updateUserTimeTable("Thu_Noon", active);
+    }
+    public void updateUserTimeFri_Mor(bool active)
+    {
+        updateUserTimeTable("Fri_Mor", active);
+    }
+    public void updateUserTimeFri_Eve(bool active)
+    {
+        updateUserTimeTable("Fri_Eve", active);
+    }
+    public void updateUserTimeFri_Noon(bool active)
+    {
+        updateUserTimeTable("Fri_Noon", active);
+    }
+    public void updateUserTimeSat_Mor(bool active)
+    {
+        updateUserTimeTable("Sat_Mor", active);
+    }
+    public void updateUserTimeSat_Eve(bool active)
+    {
+        updateUserTimeTable("Sat_Eve", active);
+    }
+    public void updateUserTimeSat_Noon(bool active)
+    {
+        updateUserTimeTable("Sat_Noon", active);
+    }
+    public void updateUserTimeSun_Mor(bool active)
+    {
+        updateUserTimeTable("Sun_Mor", active);
+    }
+    public void updateUserTimeSun_Eve(bool active)
+    {
+        updateUserTimeTable("Sun_Eve", active);
+    }
+    public void updateUserTimeSun_Noon(bool active)
+    {
+        updateUserTimeTable("Sun_Noon", active);
+    }
+
 }
