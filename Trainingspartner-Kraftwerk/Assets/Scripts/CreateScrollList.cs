@@ -22,8 +22,6 @@ public class Item {
     public string textBot;
     public bool isChampion;
     public Button.ButtonClickedEvent thingToDo;
-
-
 }
 public class CreateScrollList : MonoBehaviour {
 
