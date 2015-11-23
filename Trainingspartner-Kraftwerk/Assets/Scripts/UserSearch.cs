@@ -122,8 +122,6 @@ public class UserSearch : MonoBehaviour {
             else
                 return;
         }
-        foreach(string s in list)
-            Debug.Log("" + s);
         queryUsers();
     }
 

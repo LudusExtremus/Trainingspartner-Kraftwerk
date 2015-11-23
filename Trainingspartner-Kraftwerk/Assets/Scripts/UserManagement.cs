@@ -9,7 +9,8 @@ using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 
-public class UserManagement : MonoBehaviour {
+public class UserManagement : MonoBehaviour
+{
 
     public GameObject userNickInput;
     public GameObject userClimbGradeInput;
@@ -22,12 +23,14 @@ public class UserManagement : MonoBehaviour {
     public GameObject timeTogglePanel;
 
     // Dictionary<string, bool> timeTable = new Dictionary<string, bool>();
-    //List<string> times = new List<string>() { "Mon_Mor", "Mon_Eve", "Mon_Noon", "Tue_Mor", "Tue_Eve", "Tue_Noon", "Wed_Mor", "Wed_Eve", "Wed_Noon", "Thu_Mor", "Thu_Eve", "Thu_Noon", "Fri_Mor", "Fri_Eve", "Fri_Noon", "Sat_Mor", "Sat_Eve", "Sat_Noon", "Sun_Mor", "Sun_Eve", "Sun_Noon" };
+    List<string> times = new List<string>() { "Mon_Mor", "Mon_Eve", "Mon_Noon", "Tue_Mor", "Tue_Eve", "Tue_Noon", "Wed_Mor", "Wed_Eve", "Wed_Noon", "Thu_Mor", "Thu_Eve", "Thu_Noon", "Fri_Mor", "Fri_Eve", "Fri_Noon", "Sat_Mor", "Sat_Eve", "Sat_Noon", "Sun_Mor", "Sun_Eve", "Sun_Noon" };
     //private List<string> categories = new List<String>{"boulder"}; // selected user categories
 
     public Image userImage;
+    public Sprite anonymous;
     // Use this for initialization
-    void Start () {
+    void Start()
+    {
         //queryTimeTable();
         /*
         Dictionary<string, object> time = ParseUser.CurrentUser.Get<Dictionary<string, object>>("timetable");
@@ -50,31 +53,89 @@ public class UserManagement : MonoBehaviour {
 
         //updateTimeTable(times);
         //queryTimeTable();
-        updateProfileUI(ParseUser.CurrentUser);
+        firstLogin();
+        //deleteUser();
     }
-	
-	// Update is called once per frame
-	void Update () {
-        
-    } 
 
-
-
-    public void registerUser()
+    private void firstLogin()
     {
-        if (!validNick())
-            return;
-        StartCoroutine(registerUserAsync());
+        if (ParseUser.CurrentUser == null)
+        {
+            login();
+        } else
+        {
+            updateProfileUI(ParseUser.CurrentUser);
+        }
     }
 
-    IEnumerator registerUserAsync()
+    // Update is called once per frame
+    void Update()
+    {
+
+    }
+
+    public void registerNewUser()
+    {
+        StartCoroutine(registerNewUserAsync());
+    }
+
+    IEnumerator registerNewUserAsync()
+    {
+        bool idExistst = false;
+        string userID = getRandomString(40);
+        while (!idExistst)
+        {
+            var query = ParseUser.Query.WhereEqualTo("username", userID);
+            Task task = query.FindAsync().ContinueWith(t =>
+            {
+                IEnumerable<ParseUser> users = t.Result;
+                foreach (ParseUser user in users)
+                {
+                    idExistst = true;
+                    userID = getRandomString(40);
+                    break;
+                }
+                if (!idExistst)
+                {
+                    Debug.Log("creating new user: " + userID);
+                    idExistst = true;
+                }
+            });
+            while (!task.IsCompleted) yield return null;
+        }
+        if (ParseUser.CurrentUser != null)
+        {
+            Debug.Log("register ");
+            registerUser(userID);
+        }
+    }
+    private string getRandomString(int length)
+    {
+        const string chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+        var random = new System.Random();
+        return new string(Enumerable.Repeat(chars, length).Select(s => s[random.Next(s.Length)]).ToArray());
+    }
+
+    public void registerUser(string username)
+    {
+        //if (!validNick())
+        //    return;
+        StartCoroutine(registerUserAsync(username));
+    }
+
+    IEnumerator registerUserAsync(string username)
     {
         ParseUser user = new ParseUser()
         {
-            Username = SystemInfo.deviceUniqueIdentifier,
-            Password = SystemInfo.deviceUniqueIdentifier
+            Username = username,
+            Password = username
         };
         user["nick"] = userNickInput.GetComponent<InputField>().text;
+        user["startDate"] = userTrainingStartInput.GetComponent<InputField>().text;
+        user["about"] = userAboutInput.GetComponent<InputField>().text;
+        user["climbingGrade"] = userClimbGradeInput.GetComponent<InputField>().text;
+        user["categories"] = new List<string>();
+        user["picture"] = null;
         Task signUpTask = user.SignUpAsync();
         signUpTask.ContinueWith(t =>
         {
@@ -85,6 +146,11 @@ public class UserManagement : MonoBehaviour {
         ParseObject timeTable = new ParseObject("Timetable");
         timeTable["user"] = user;
         timeTable["nick"] = userNickInput.GetComponent<InputField>().text;
+        foreach (string time in times)
+        {
+            timeTable[time] = false;
+        }
+
         Task saveTimetableTask = timeTable.SaveAsync();
         saveTimetableTask.ContinueWith(t =>
         {
@@ -110,7 +176,7 @@ public class UserManagement : MonoBehaviour {
             Debug.Log("Nickname can only contain letters, numbers and underscore");
             return false;
         }
-        if (userNickInput.GetComponent<InputField>().text.Length <3)
+        if (userNickInput.GetComponent<InputField>().text.Length < 3)
         {
             Debug.Log("Nickname must contain at least 3 characters");
             return false;
@@ -120,7 +186,28 @@ public class UserManagement : MonoBehaviour {
 
     IEnumerator loginAsync()
     {
-        if (ParseUser.CurrentUser == null)
+        bool idExistst = false;
+        string userID = SystemInfo.deviceUniqueIdentifier;
+
+        var query = ParseUser.Query.WhereEqualTo("username", userID);
+        Task findUserTask = query.FindAsync().ContinueWith(t =>
+        {
+            IEnumerable<ParseUser> users = t.Result;
+            foreach (ParseUser user in users)
+            {
+                idExistst = true;
+                userID = getRandomString(40);
+                break;
+            }
+        });
+        while (!findUserTask.IsCompleted) yield return null;
+
+        if (!idExistst)
+        {
+            registerUser(SystemInfo.deviceUniqueIdentifier);
+        }
+
+        if ((ParseUser.CurrentUser == null) && (idExistst))
         {
             Task task = ParseUser.LogInAsync(SystemInfo.deviceUniqueIdentifier, SystemInfo.deviceUniqueIdentifier);
             task.ContinueWith(t =>
@@ -128,15 +215,32 @@ public class UserManagement : MonoBehaviour {
                 Debug.Log("logged in? " + !t.IsFaulted);
             });
             while (!task.IsCompleted) yield return null;
-            updateProfileUI( ParseUser.CurrentUser);
-            ParseFile pictureFile = (ParseFile)ParseUser.CurrentUser["picture"];
+            updateProfileUI(ParseUser.CurrentUser);
+        }
+    }
+
+    IEnumerator setProfilePicture()
+    {
+        ParseFile pictureFile = null;
+        Sprite image = anonymous;
+
+        if (ParseUser.CurrentUser["picture"] != null)
+        {
+            pictureFile = (ParseFile)ParseUser.CurrentUser["picture"];
+        }
+        if (pictureFile != null)
+        {
             var pictureRequest = new WWW(pictureFile.Url.AbsoluteUri);
             yield return pictureRequest;
             byte[] bytes = pictureRequest.texture.EncodeToJPG();
-            File.WriteAllBytes(Application.dataPath + "/Resources/SavedFoto.jpg", bytes);
-            Sprite image = Sprite.Create(pictureRequest.texture, new Rect(0, 0, pictureRequest.texture.width, pictureRequest.texture.height), new Vector2(0.5f, 0.5f));
-            userImage.overrideSprite = image;
+            Debug.Log("" + Application.persistentDataPath);
+            string path = Application.persistentDataPath + "/Resources";
+            if(!Directory.Exists(path))
+                Directory.CreateDirectory(path);
+            File.WriteAllBytes(path + "/SavedFoto.jpg", bytes);
+            image = Sprite.Create(pictureRequest.texture, new Rect(0, 0, pictureRequest.texture.width, pictureRequest.texture.height), new Vector2(0.5f, 0.5f));
         }
+        userImage.overrideSprite = image;
     }
 
     IEnumerator logoutAsync()
@@ -149,7 +253,7 @@ public class UserManagement : MonoBehaviour {
                 Debug.Log("logged out? " + !t.IsFaulted);
             });
             while (!task.IsCompleted) yield return null;
-            updateProfileUI( ParseUser.CurrentUser);
+            updateProfileUI(ParseUser.CurrentUser);
         }
     }
 
@@ -157,6 +261,7 @@ public class UserManagement : MonoBehaviour {
     {
         StartCoroutine(logoutAsync());
     }
+    // Login or register if user does not exist 
     public void login()
     {
         StartCoroutine(loginAsync());
@@ -167,30 +272,37 @@ public class UserManagement : MonoBehaviour {
         if (currentUser != null)
         {
             userNickInput.GetComponent<InputField>().text = (string)ParseUser.CurrentUser["nick"];
-            if(ParseUser.CurrentUser["startDate"]!=null)
-                userTrainingStartInput.GetComponent<InputField>().text = (string)ParseUser.CurrentUser["startDate"];
-            if(ParseUser.CurrentUser["about"] != null)
-                userAboutInput.GetComponent<InputField>().text = (string)ParseUser.CurrentUser["about"];
-            if (ParseUser.CurrentUser["climbingGrade"] != null)
-                userClimbGradeInput.GetComponent<InputField>().text = (string)ParseUser.CurrentUser["climbingGrade"];
+            userTrainingStartInput.GetComponent<InputField>().text = (string)ParseUser.CurrentUser["startDate"];
+            userAboutInput.GetComponent<InputField>().text = (string)ParseUser.CurrentUser["about"];
+            userClimbGradeInput.GetComponent<InputField>().text = (string)ParseUser.CurrentUser["climbingGrade"];
 
-            List<string> categories = null;
-            if (ParseUser.CurrentUser["categories"].GetType() == typeof(List<object>))
-                categories = ParseUser.CurrentUser.Get<List<object>>("categories").Select(s => (string)s).ToList();
-            else
-                categories = ParseUser.CurrentUser.Get<List<string>>("categories").Select(s => (string)s).ToList();
+            List<string> categories = getUserCategories();
 
             categoryRopeClimbToggle.GetComponent<Toggle>().isOn = categories.Contains("ropeClimb");
             categoryBoulderToggle.GetComponent<Toggle>().isOn = categories.Contains("boulder");
 
-            StartCoroutine(updateTimeTable());   
+            StartCoroutine(updateTimeTable());
+            StartCoroutine(setProfilePicture());
         }
         else
         {
             userNickInput.GetComponent<InputField>().text = "";
             userTrainingStartInput.GetComponent<InputField>().text = "";
             userAboutInput.GetComponent<InputField>().text = "";
+            userClimbGradeInput.GetComponent<InputField>().text = "";
+
+            userImage.overrideSprite = anonymous;
         }
+    }
+
+    private static List<string> getUserCategories()
+    {
+        List<string> categories = null;
+        if (ParseUser.CurrentUser["categories"].GetType() == typeof(List<object>))
+            categories = ParseUser.CurrentUser.Get<List<object>>("categories").Select(s => (string)s).ToList();
+        else
+            categories = ParseUser.CurrentUser.Get<List<string>>("categories").Select(s => (string)s).ToList();
+        return categories;
     }
 
     private IEnumerator updateTimeTable()
@@ -212,20 +324,34 @@ public class UserManagement : MonoBehaviour {
 
     IEnumerator deleteAsync()
     {
-        Task task = ParseUser.CurrentUser.DeleteAsync();
+        ParseUser currentUser = ParseUser.CurrentUser;
+
+        ParseObject timeTable = currentUser.Get<ParseObject>("timetable");
+        Task deleteTask = timeTable.DeleteAsync();
+        deleteTask.ContinueWith(t =>
+        {
+            Debug.Log("delete timetable successful? " + !t.IsFaulted);
+        });
+        while (!deleteTask.IsCompleted) yield return null;
+
+        Task task = currentUser.DeleteAsync();
         task.ContinueWith(t =>
         {
             Debug.Log("delete successful? " + !t.IsFaulted);
         });
         while (!task.IsCompleted) yield return null;
-        updateProfileUI( null);
+
+        updateProfileUI(null);
     }
 
     public void uploadImage()
     {
-        StartCoroutine(UploadPlayerFile((response) => {
+        StartCoroutine(UploadPlayerFile((response) =>
+        {
             if (response == 1)
+            {
                 Debug.Log("Upload complete");
+            }
             else
                 Debug.LogError("The file could not be uploaded");
         }));
@@ -233,7 +359,8 @@ public class UserManagement : MonoBehaviour {
 
     IEnumerator UploadPlayerFile(Action<int> callback)
     {
-        byte[] fileBytes = System.IO.File.ReadAllBytes(Application.dataPath + "/Resources/Foto.jpg");
+        string path = Application.dataPath + "/Resources";
+        byte[] fileBytes = System.IO.File.ReadAllBytes(path + "/Foto.jpg");
         ParseFile file = new ParseFile("Foto.jpg", fileBytes, "image/jpeg");
 
         var saveTask = file.SaveAsync();
@@ -265,7 +392,7 @@ public class UserManagement : MonoBehaviour {
                 Debug.Log("update successful? " + !t.IsFaulted);
             });
             while (!task.IsCompleted) yield return null;
-            updateProfileUI( ParseUser.CurrentUser);
+            updateProfileUI(ParseUser.CurrentUser);
         }
     }
 
@@ -292,7 +419,7 @@ public class UserManagement : MonoBehaviour {
 
     public void updateUserRopeClimb(bool active)
     {
-        updateUserCategories("ropeClimb",active);
+        updateUserCategories("ropeClimb", active);
     }
     public void updateUserBoulder(bool active)
     {
