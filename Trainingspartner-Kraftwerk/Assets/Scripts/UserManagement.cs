@@ -8,10 +8,10 @@ using System.Collections;
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
+using ImageVideoContactPicker;
 
 public class UserManagement : MonoBehaviour
 {
-
     public GameObject userNickInput;
     public GameObject userClimbGradeInput;
     public GameObject userTrainingStartInput;
@@ -22,39 +22,73 @@ public class UserManagement : MonoBehaviour
 
     public GameObject timeTogglePanel;
 
-    // Dictionary<string, bool> timeTable = new Dictionary<string, bool>();
     List<string> times = new List<string>() { "Mon_Mor", "Mon_Eve", "Mon_Noon", "Tue_Mor", "Tue_Eve", "Tue_Noon", "Wed_Mor", "Wed_Eve", "Wed_Noon", "Thu_Mor", "Thu_Eve", "Thu_Noon", "Fri_Mor", "Fri_Eve", "Fri_Noon", "Sat_Mor", "Sat_Eve", "Sat_Noon", "Sun_Mor", "Sun_Eve", "Sun_Noon" };
-    //private List<string> categories = new List<String>{"boulder"}; // selected user categories
 
     public Image userImage;
     public Sprite anonymous;
-    // Use this for initialization
+
+    private Texture2D profilePicTexture;
+    private string errorMessage = "";
+    //private string path = Application.persistentDataPath + "/Resources/profile.jpg";
+
+    void OnEnable()
+    {
+        PickerEventListener.onImageSelect += OnImageSelect;
+        PickerEventListener.onImageLoad += OnImageLoad;
+        PickerEventListener.onError += OnError;
+        PickerEventListener.onCancel += OnCancel;
+    }
+
+    void OnDisable()
+    {
+        PickerEventListener.onImageSelect -= OnImageSelect;
+        PickerEventListener.onImageLoad -= OnImageLoad;
+        PickerEventListener.onError -= OnError;
+        PickerEventListener.onCancel -= OnCancel;
+    }
+
     void Start()
     {
-        //queryTimeTable();
-        /*
-        Dictionary<string, object> time = ParseUser.CurrentUser.Get<Dictionary<string, object>>("timetable");
-        foreach (var key in time.Keys)
-        {
-            Debug.Log("Key: " + key + " Value: " + time[key].ToString());
-        }
-        
-        if (ParseUser.CurrentUser != null)
-        {
-            userNickInput.GetComponent<InputField>().text = (String)ParseUser.CurrentUser["nick"];
-            userTrainingStartInput.GetComponent<InputField>().text = (String)ParseUser.CurrentUser["startDate"];
-            userAboutInput.GetComponent<InputField>().text = (String)ParseUser.CurrentUser["about"];
-        };
-        
-        timeTable.Add("Monday_Morning",true);
-        timeTable.Add("Monday_Noon", false);
-        timeTable.Add("Monday_Evening", true);
-        */
-
         //updateTimeTable(times);
         //queryTimeTable();
         firstLogin();
         //deleteUser();
+    }
+
+    void OnGUI()
+    {
+        if(errorMessage.Count() > 0)
+        {
+            GUI.TextField(new Rect(0, 0, Screen.width , Screen.height / 3), errorMessage);
+        }
+    }
+
+    void OnImageSelect(string imgPath)
+    {
+        Debug.Log("Image Location : " + imgPath);
+    }
+    void OnImageLoad(string imgPath, Texture2D tex)
+    {
+        Sprite sprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
+        userImage.overrideSprite = sprite;
+        uploadImage(tex);
+        Debug.Log("Image Location : " + imgPath);
+    }
+    void OnError(string errorMsg)
+    {
+        Debug.Log("Error : " + errorMsg);
+        StartCoroutine(showError("Error loading image: Please load images from internal storage only!"));
+    }
+    void OnCancel()
+    {
+        Debug.Log("Cancel by user");
+    }
+
+    IEnumerator showError(string message)
+    {
+        this.errorMessage = message;
+        yield return new WaitForSeconds(5);
+        this.errorMessage = "";
     }
 
     private void firstLogin()
@@ -67,8 +101,7 @@ public class UserManagement : MonoBehaviour
             updateProfileUI(ParseUser.CurrentUser);
         }
     }
-
-    // Update is called once per frame
+    
     void Update()
     {
 
@@ -223,22 +256,33 @@ public class UserManagement : MonoBehaviour
     {
         ParseFile pictureFile = null;
         Sprite image = anonymous;
-
+        Debug.Log("set picture ");
         if (ParseUser.CurrentUser["picture"] != null)
         {
             pictureFile = (ParseFile)ParseUser.CurrentUser["picture"];
         }
+        Debug.Log("pictureFile " + pictureFile);
         if (pictureFile != null)
         {
-            var pictureRequest = new WWW(pictureFile.Url.AbsoluteUri);
-            yield return pictureRequest;
-            byte[] bytes = pictureRequest.texture.EncodeToJPG();
-            Debug.Log("" + Application.persistentDataPath);
-            string path = Application.persistentDataPath + "/Resources";
-            if(!Directory.Exists(path))
-                Directory.CreateDirectory(path);
-            File.WriteAllBytes(path + "/SavedFoto.jpg", bytes);
-            image = Sprite.Create(pictureRequest.texture, new Rect(0, 0, pictureRequest.texture.width, pictureRequest.texture.height), new Vector2(0.5f, 0.5f));
+            /*
+            if (File.Exists(path))
+            {
+                var fileData = File.ReadAllBytes(path);
+                var tex = new Texture2D(2, 2);
+                tex.LoadImage(fileData);
+                image = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
+                Debug.Log("Open file");
+            } else
+            {
+            */
+                //var pictureRequest = WWW.LoadFromCacheOrDownload(pictureFile.Url.AbsoluteUri,1);
+                var pictureRequest = new WWW(pictureFile.Url.AbsoluteUri);
+                yield return pictureRequest;
+                //byte[] fileBytes = pictureRequest.texture.EncodeToJPG(25);
+                //File.WriteAllBytes(path, fileBytes);
+                image = Sprite.Create(pictureRequest.texture, new Rect(0, 0, pictureRequest.texture.width, pictureRequest.texture.height), new Vector2(0.5f, 0.5f));
+                Debug.Log("Download file");
+            //}
         }
         userImage.overrideSprite = image;
     }
@@ -261,7 +305,7 @@ public class UserManagement : MonoBehaviour
     {
         StartCoroutine(logoutAsync());
     }
-    // Login or register if user does not exist 
+
     public void login()
     {
         StartCoroutine(loginAsync());
@@ -344,13 +388,23 @@ public class UserManagement : MonoBehaviour
         updateProfileUI(null);
     }
 
-    public void uploadImage()
+    public void browseGalleryProfileImage()
     {
+        #if UNITY_ANDROID
+                AndroidPicker.BrowseImage();
+        #elif UNITY_IPHONE
+			        IOSPicker.BrowseImage();
+        #endif
+    }
+
+    public void uploadImage(Texture2D tex)
+    {
+        profilePicTexture = tex;
         StartCoroutine(UploadPlayerFile((response) =>
         {
             if (response == 1)
             {
-                Debug.Log("Upload complete");
+                Debug.Log("Upload and save complete");
             }
             else
                 Debug.LogError("The file could not be uploaded");
@@ -359,10 +413,9 @@ public class UserManagement : MonoBehaviour
 
     IEnumerator UploadPlayerFile(Action<int> callback)
     {
-        string path = Application.dataPath + "/Resources";
-        byte[] fileBytes = System.IO.File.ReadAllBytes(path + "/Foto.jpg");
-        ParseFile file = new ParseFile("Foto.jpg", fileBytes, "image/jpeg");
-
+        byte[] fileBytes = profilePicTexture.EncodeToJPG(25);
+        ParseFile file = new ParseFile("Profile.jpg", fileBytes, "image/jpeg");
+        
         var saveTask = file.SaveAsync();
 
         while (!saveTask.IsCompleted)
@@ -378,6 +431,7 @@ public class UserManagement : MonoBehaviour
             ParseUser.CurrentUser["picture"] = file;
             ParseUser.CurrentUser.SaveAsync();
             Debug.Log("picture save success ");
+           // File.WriteAllBytes(path, fileBytes);
             callback(1);
         }
     }
