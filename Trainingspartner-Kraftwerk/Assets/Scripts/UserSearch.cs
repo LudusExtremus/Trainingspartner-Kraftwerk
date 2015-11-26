@@ -81,6 +81,7 @@ public class UserSearch : MonoBehaviour {
     {
         foreach (ParseUser user in users)
         {
+            Debug.Log("populate " + (string)user["nick"]);
             GameObject newListEntry = Instantiate(listEntry) as GameObject;
             NewsEntryButton newsEntryButton = newListEntry.GetComponent<NewsEntryButton>();
             newsEntryButton.textTop.text = (string)user["nick"];
