@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 public class Messaging : MonoBehaviour {
 
     public int initialMessageLimit = 50;
-    public int intervalTime = 10;
+    public int intervalTime = 5;
 
     public GameObject conversationContentPanel;
     public GameObject conversationEntry;
