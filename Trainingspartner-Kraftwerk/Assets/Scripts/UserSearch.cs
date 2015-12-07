@@ -12,6 +12,12 @@ public class UserSearch : MonoBehaviour {
     private List<string> selectedCategories = new List<string>();
     private List<string> selectedTimes = new List<string>();
 
+    public RectTransform categoriesPanel;
+    public RectTransform timesPanel;
+    public Sprite anonymous;
+
+    public bool allowMultipleTimesAndCategories = false;
+
     private List<GameObject> currentListEntries = new List<GameObject>();
     // Prefab einer NewsEntry
     public GameObject listEntry;
@@ -81,16 +87,60 @@ public class UserSearch : MonoBehaviour {
     {
         foreach (ParseUser user in users)
         {
-            Debug.Log("populate " + (string)user["nick"]);
-            GameObject newListEntry = Instantiate(listEntry) as GameObject;
-            NewsEntryButton newsEntryButton = newListEntry.GetComponent<NewsEntryButton>();
-            newsEntryButton.textTop.text = (string)user["nick"];
-            newsEntryButton.textMid.text = (string)user["about"];
-            newsEntryButton.textBot.text = (string)user["startDate"];
-            newListEntry.transform.SetParent(contentPanel);
-            currentListEntries.Add(newListEntry);
+            GameObject userEntry = Instantiate(listEntry) as GameObject;
+            userEntry.GetComponent<RectTransform>().SetParent(contentPanel);
+            userEntry.GetComponent<UserEntry>().setUser(user);
+            foreach (RectTransform panel in userEntry.GetComponent<RectTransform>())
+            {
+                if (panel.gameObject.name.Equals("UserImage"))
+                {
+                    foreach (RectTransform item in panel)
+                    {
+                        if (item.gameObject.name.Equals("Image"))
+                        {
+                            StartCoroutine(setUserPicture(user.Get<ParseFile>("picture"), item.GetComponent<Image>()));
+                        }
+                    }
+                }
+                if (panel.gameObject.name.Equals("UserData"))
+                {
+                    foreach (RectTransform item in panel)
+                    {
+                        if (item.gameObject.name.Equals("Username"))
+                        {
+                            item.GetComponent<Text>().text = user.Get<string>("nick");
+                        }
+                        if (item.gameObject.name.Equals("SportLevel"))
+                        {
+                            item.GetComponent<Text>().text = user.Get<string>("climbingGrade");
+                        }
+                        if (item.gameObject.name.Equals("SportSince"))
+                        {
+                            item.GetComponent<Text>().text = user.Get<string>("startDate");
+                        }
+                        if (item.gameObject.name.Equals("About"))
+                        {
+                            item.GetComponent<Text>().text = user.Get<string>("about");
+                        }
+                    }
+                }
+            }
+            currentListEntries.Add(userEntry);
         }
     }
+
+    IEnumerator setUserPicture(ParseFile pictureFile, Image userImage)
+    {
+        Sprite image = anonymous;
+        if (pictureFile != null)
+        {
+            var pictureRequest = new WWW(pictureFile.Url.AbsoluteUri);
+            yield return pictureRequest;
+            image = Sprite.Create(pictureRequest.texture, new Rect(0, 0, pictureRequest.texture.width, pictureRequest.texture.height), new Vector2(0.5f, 0.5f));
+        }
+        userImage.overrideSprite = image;
+    }
+
 
     private ParseQuery<ParseObject> buildTimeTableQuery(List<string> times)
     {
@@ -105,6 +155,29 @@ public class UserSearch : MonoBehaviour {
 
     private void updateSearchOptions(List<string> list, string value, bool active)
     {
+        if (!allowMultipleTimesAndCategories)
+        {
+            if (!active)
+                return;
+            list.Clear();
+            if (list == selectedCategories)
+            {
+                foreach(RectTransform cat in categoriesPanel)
+                {
+                    if(!cat.gameObject.name.Equals(value))
+                        cat.GetComponent<Toggle>().isOn = false;
+                }
+            }
+            if (list == selectedTimes)
+            {
+                foreach (RectTransform time in timesPanel)
+                {
+                    if (!time.gameObject.name.Equals(value))
+                        time.GetComponent<Toggle>().isOn = false;
+                }
+            }
+        }
+
         if (active)
         {
             if (!list.Contains(value))

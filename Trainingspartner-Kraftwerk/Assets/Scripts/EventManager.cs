@@ -10,6 +10,12 @@ public class EventManager : MonoBehaviour {
     public delegate void MenuStateChanged(MenuState state);
     public static event MenuStateChanged onMenuStateChanged;
 
+    public delegate void AddConversation(ParseUser user);
+    public static event AddConversation onConversationAdded;
+
+    public delegate void EnterConversation(ParseUser user);
+    public static event EnterConversation onConversationEntered;
+
     public static void finishUserQuery(List<ParseUser> users)
     {
         onUserQueryFinished(users);
@@ -20,4 +26,13 @@ public class EventManager : MonoBehaviour {
         onMenuStateChanged(state);
     }
 
+    public static void addConversation(ParseUser user)
+    {
+        onConversationAdded(user);
+    }
+
+    public static void enterConversation(ParseUser user)
+    {
+        onConversationEntered(user);
+    }
 }

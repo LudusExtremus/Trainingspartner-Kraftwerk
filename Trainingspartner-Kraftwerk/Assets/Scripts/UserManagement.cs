@@ -168,6 +168,7 @@ public class UserManagement : MonoBehaviour
         user["about"] = userAboutInput.GetComponent<InputField>().text;
         user["climbingGrade"] = userClimbGradeInput.GetComponent<InputField>().text;
         user["categories"] = new List<string>();
+        user["partners"] = new List<ParseUser>();
         user["picture"] = null;
         Task signUpTask = user.SignUpAsync();
         signUpTask.ContinueWith(t =>
