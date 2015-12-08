@@ -88,7 +88,7 @@ public class UserSearch : MonoBehaviour {
         foreach (ParseUser user in users)
         {
             GameObject userEntry = Instantiate(listEntry) as GameObject;
-            userEntry.GetComponent<RectTransform>().SetParent(contentPanel);
+            userEntry.GetComponent<RectTransform>().SetParent(contentPanel,false);
             userEntry.GetComponent<UserEntry>().setUser(user);
             foreach (RectTransform panel in userEntry.GetComponent<RectTransform>())
             {

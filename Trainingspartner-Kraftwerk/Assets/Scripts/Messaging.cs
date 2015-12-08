@@ -99,7 +99,7 @@ public class Messaging : MonoBehaviour {
                 if (partner == null)
                     continue;
                 GameObject conversationGO = Instantiate(conversationEntry) as GameObject;
-                conversationGO.GetComponent<RectTransform>().SetParent(conversationContentPanel.GetComponent<RectTransform>());
+                conversationGO.GetComponent<RectTransform>().SetParent(conversationContentPanel.GetComponent<RectTransform>(),false);
                 conversationGO.GetComponent<UserEntry>().setUser(partner);
                 foreach (RectTransform item in conversationGO.GetComponent<RectTransform>())
                 {
@@ -258,7 +258,7 @@ public class Messaging : MonoBehaviour {
         bool isUserMessage = message.Get<ParseUser>("sender").ObjectId.Equals(ParseUser.CurrentUser.ObjectId);
         GameObject messageEntryObject = isUserMessage ? chatEntryUser : chatEntryPartner;
         GameObject mGo = Instantiate(messageEntryObject) as GameObject;
-        mGo.GetComponent<RectTransform>().SetParent(chatContentPanel.GetComponent<RectTransform>());
+        mGo.GetComponent<RectTransform>().SetParent(chatContentPanel.GetComponent<RectTransform>(),false);
         foreach (RectTransform item in mGo.GetComponent<RectTransform>())
         {
             if (item.gameObject.name.Equals("Text"))
