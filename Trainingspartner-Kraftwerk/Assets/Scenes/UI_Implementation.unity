@@ -2117,10 +2117,10 @@ RectTransform:
   - {fileID: 1735813389}
   m_Father: {fileID: 1300706819}
   m_RootOrder: 1
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 520, y: -805}
-  m_SizeDelta: {x: 1040, y: 200}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: .5, y: .5}
 --- !u!114 &101117397
 MonoBehaviour:
@@ -3519,7 +3519,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &154923182
 RectTransform:
   m_ObjectHideFlags: 0
@@ -5561,10 +5561,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1452965744}
   m_RootOrder: 0
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 420, y: 200}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &221171033
 MonoBehaviour:
@@ -7698,10 +7698,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 470089397}
   m_RootOrder: 0
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 420, y: 100}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &301689898
 MonoBehaviour:
@@ -7887,7 +7887,7 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 21300000, guid: c58565a17df291c4689f71f3538f7244, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 91de0423e7a06a1419a283eef3d78316, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -11401,10 +11401,10 @@ RectTransform:
   - {fileID: 2114469823}
   m_Father: {fileID: 1300706819}
   m_RootOrder: 2
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 520, y: -965}
-  m_SizeDelta: {x: 1040, y: 100}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: .5, y: .5}
 --- !u!114 &470089398
 MonoBehaviour:
@@ -11695,10 +11695,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1452965744}
   m_RootOrder: 1
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 420, y: 0}
-  m_SizeDelta: {x: 620, y: 200}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &474679650
 MonoBehaviour:
@@ -15102,8 +15102,8 @@ RectTransform:
   m_RootOrder: 1
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 400}
+  m_AnchoredPosition: {x: -150, y: -50}
+  m_SizeDelta: {x: -300, y: 350}
   m_Pivot: {x: .5, y: 1}
 --- !u!114 &608816886
 MonoBehaviour:
@@ -15118,7 +15118,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_IgnoreLayout: 0
-  m_MinWidth: 700
+  m_MinWidth: 500
   m_MinHeight: 400
   m_PreferredWidth: -1
   m_PreferredHeight: -1
@@ -15144,7 +15144,7 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 21300000, guid: f5fffe978f1ec3f4286efb6dae86273e, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 221e9719a83c09e4fa1c767a30eb038a, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -19406,10 +19406,10 @@ RectTransform:
   - {fileID: 312443956}
   m_Father: {fileID: 1300706819}
   m_RootOrder: 0
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 520, y: -347.5}
-  m_SizeDelta: {x: 1040, y: 695}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: .5, y: .5}
 --- !u!114 &815632932
 MonoBehaviour:
@@ -21629,10 +21629,10 @@ RectTransform:
   - {fileID: 1735787864}
   m_Father: {fileID: 1300706819}
   m_RootOrder: 4
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 520, y: -1235}
-  m_SizeDelta: {x: 1040, y: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: .5, y: 1}
 --- !u!114 &913047669
 MonoBehaviour:
@@ -27164,10 +27164,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 101117396}
   m_RootOrder: 0
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 420, y: 200}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1162419553
 MonoBehaviour:
@@ -27220,7 +27220,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: New Text
+  m_Text: Adresse
 --- !u!222 &1162419555
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -30771,10 +30771,10 @@ RectTransform:
   - {fileID: 913047668}
   m_Father: {fileID: 1954260401}
   m_RootOrder: 0
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 540, y: -20}
-  m_SizeDelta: {x: 1040, y: 1400}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: .5, y: 1}
 --- !u!114 &1300706820
 MonoBehaviour:
@@ -34247,10 +34247,10 @@ RectTransform:
   - {fileID: 474679649}
   m_Father: {fileID: 1300706819}
   m_RootOrder: 3
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 520, y: -1125}
-  m_SizeDelta: {x: 1040, y: 200}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: .5, y: .5}
 --- !u!114 &1452965745
 MonoBehaviour:
@@ -41042,10 +41042,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 101117396}
   m_RootOrder: 1
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 420, y: 0}
-  m_SizeDelta: {x: 620, y: 200}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1735813390
 MonoBehaviour:
@@ -41098,7 +41098,11 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "Die KraftWerker GmbH & Co. KG\r\nPulverweg 6\r\n21337 L\xFCneburg"
+  m_Text: 'Die Anonymen AG
+
+    Musterweg 10
+
+    123456 Musterhausen'
 --- !u!222 &1735813392
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -46067,7 +46071,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 1440}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: .5, y: 1}
 --- !u!114 &1954260402
 MonoBehaviour:
@@ -49233,10 +49237,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 470089397}
   m_RootOrder: 1
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 420, y: 0}
-  m_SizeDelta: {x: 620, y: 100}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &2114469824
 MonoBehaviour:
