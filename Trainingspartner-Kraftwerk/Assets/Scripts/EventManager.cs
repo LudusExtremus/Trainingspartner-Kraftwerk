@@ -4,6 +4,8 @@ using System.Collections.Generic;
 
 public class EventManager : MonoBehaviour {
 
+    public static bool appInitFinished = false;
+
     public delegate void UserQueryFinished(List<ParseUser> users);
     public static event UserQueryFinished onUserQueryFinished;
 

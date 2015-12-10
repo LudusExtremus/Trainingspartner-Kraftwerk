@@ -44,4 +44,6 @@ public class TriggerMenuState : MonoBehaviour {
         }
         EventManager.changeMenuState(menuState);
     }
+
+    
 }

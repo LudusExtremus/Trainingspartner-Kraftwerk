@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+using System;
 
 public class AppManagement : MonoBehaviour {
 
@@ -72,10 +73,25 @@ public class AppManagement : MonoBehaviour {
     // Use this for initialization
     void Start () {
         changeMenuState(currentMenuState);
+        if (!checkInternetConnection())
+        {
+            showConnectionError();
+
+        } else
+        {
+            EventManager.appInitFinished = true;
+        }
 	}
-	
-	// Update is called once per frame
-	void Update () {
+
+    private void showConnectionError()
+    {
+        throw new NotImplementedException();
+        // TODO Show full screen error message
+        // if connected click on fullscreen error message to -> Application.LoadLevel(0);
+    }
+
+    // Update is called once per frame
+    void Update () {
         if (Input.GetKey(KeyCode.Escape))
         {
             if (topStates.Contains(currentMenuState))
@@ -85,6 +101,28 @@ public class AppManagement : MonoBehaviour {
             {
                 changeMenuState(MenuState.back);
             }
+        }
+    }
+
+    private bool checkInternetConnection()
+    {
+        System.Net.WebClient client = null;
+        System.IO.Stream stream = null;
+
+        try
+        {
+            client = new System.Net.WebClient();
+            stream = client.OpenRead("http://www.google.com");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            return false;
+        }
+        finally
+        {
+            if (client != null) { client.Dispose(); }
+            if (stream != null) { stream.Dispose(); }
         }
     }
 }

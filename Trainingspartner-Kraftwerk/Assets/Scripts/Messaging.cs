@@ -29,6 +29,11 @@ public class Messaging : MonoBehaviour {
     {
         messageLimit = initialMessageLimit;
         //enterConversation(null);
+        fetchUserPartners();
+    }
+
+    private static void fetchUserPartners()
+    {
         List<ParseUser> userPartners = getUserPartners();
         foreach (ParseUser user in userPartners)
         {
@@ -63,6 +68,7 @@ public class Messaging : MonoBehaviour {
     {
         if (menuState == MenuState.messages)
         {
+            fetchUserPartners();
             fillUserPartners();
         }
         if (menuState != MenuState.create_message)
