@@ -27,6 +27,7 @@ public class UserManagement : MonoBehaviour
     public Image userImage;
     public Sprite anonymous;
 
+    private const string FILENAME_PROFILE_PIC = "profile_picture.png";
     private Texture2D profilePicTexture;
     private string errorMessage = "";
     //private string path = Application.persistentDataPath + "/Resources/profile.jpg";
@@ -263,9 +264,10 @@ public class UserManagement : MonoBehaviour
             pictureFile = (ParseFile)ParseUser.CurrentUser["picture"];
         }
         Debug.Log("pictureFile " + pictureFile);
+        string path = Application.persistentDataPath + "/" + FILENAME_PROFILE_PIC;
         if (pictureFile != null)
         {
-            /*
+            
             if (File.Exists(path))
             {
                 var fileData = File.ReadAllBytes(path);
@@ -275,15 +277,15 @@ public class UserManagement : MonoBehaviour
                 Debug.Log("Open file");
             } else
             {
-            */
                 //var pictureRequest = WWW.LoadFromCacheOrDownload(pictureFile.Url.AbsoluteUri,1);
                 var pictureRequest = new WWW(pictureFile.Url.AbsoluteUri);
                 yield return pictureRequest;
-                //byte[] fileBytes = pictureRequest.texture.EncodeToJPG(25);
-                //File.WriteAllBytes(path, fileBytes);
+                byte[] fileBytes = pictureRequest.texture.EncodeToJPG(25);
+                File.WriteAllBytes(path, fileBytes);
                 image = Sprite.Create(pictureRequest.texture, new Rect(0, 0, pictureRequest.texture.width, pictureRequest.texture.height), new Vector2(0.5f, 0.5f));
                 Debug.Log("Download file");
-            //}
+                
+            }
         }
         userImage.overrideSprite = image;
     }
@@ -298,7 +300,8 @@ public class UserManagement : MonoBehaviour
                 Debug.Log("logged out? " + !t.IsFaulted);
             });
             while (!task.IsCompleted) yield return null;
-            updateProfileUI(ParseUser.CurrentUser);
+            updateProfileUI(null);
+            Caching.CleanCache();
         }
     }
 
@@ -385,8 +388,8 @@ public class UserManagement : MonoBehaviour
             Debug.Log("delete successful? " + !t.IsFaulted);
         });
         while (!task.IsCompleted) yield return null;
-
         updateProfileUI(null);
+        Caching.CleanCache();
     }
 
     public void browseGalleryProfileImage()

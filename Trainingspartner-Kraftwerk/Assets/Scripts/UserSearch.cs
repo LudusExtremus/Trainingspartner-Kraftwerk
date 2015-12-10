@@ -6,8 +6,11 @@ using System.Threading.Tasks;
 using System.Collections;
 using System;
 using UnityEngine.UI;
+using System.IO;
 
 public class UserSearch : MonoBehaviour {
+
+    public const string FILENAME_PROFILE_PIC = "_profile_picture.png";
 
     private List<string> selectedCategories = new List<string>();
     private List<string> selectedTimes = new List<string>();
@@ -15,6 +18,7 @@ public class UserSearch : MonoBehaviour {
     public RectTransform categoriesPanel;
     public RectTransform timesPanel;
     public Sprite anonymous;
+    
 
     public bool allowMultipleTimesAndCategories = false;
 
@@ -98,7 +102,7 @@ public class UserSearch : MonoBehaviour {
                     {
                         if (item.gameObject.name.Equals("Image"))
                         {
-                            StartCoroutine(setUserPicture(user.Get<ParseFile>("picture"), item.GetComponent<Image>()));
+                            StartCoroutine(setUserPicture(user, user.Get<ParseFile>("picture"), item.GetComponent<Image>()));
                         }
                     }
                 }
@@ -129,14 +133,29 @@ public class UserSearch : MonoBehaviour {
         }
     }
 
-    IEnumerator setUserPicture(ParseFile pictureFile, Image userImage)
+    IEnumerator setUserPicture(ParseUser user, ParseFile pictureFile, Image userImage)
     {
         Sprite image = anonymous;
+        string path = Application.persistentDataPath + "/" + user.ObjectId + FILENAME_PROFILE_PIC;
         if (pictureFile != null)
         {
-            var pictureRequest = new WWW(pictureFile.Url.AbsoluteUri);
-            yield return pictureRequest;
-            image = Sprite.Create(pictureRequest.texture, new Rect(0, 0, pictureRequest.texture.width, pictureRequest.texture.height), new Vector2(0.5f, 0.5f));
+            if (File.Exists(path))
+            {
+                var fileData = File.ReadAllBytes(path);
+                var tex = new Texture2D(2, 2);
+                tex.LoadImage(fileData);
+                image = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
+                Debug.Log("User Open file");
+            }
+            else
+            {
+                var pictureRequest = new WWW(pictureFile.Url.AbsoluteUri);
+                yield return pictureRequest;
+                byte[] fileBytes = pictureRequest.texture.EncodeToJPG(25);
+                File.WriteAllBytes(path, fileBytes);
+                image = Sprite.Create(pictureRequest.texture, new Rect(0, 0, pictureRequest.texture.width, pictureRequest.texture.height), new Vector2(0.5f, 0.5f));
+                Debug.Log("User Download file");
+            }
         }
         userImage.overrideSprite = image;
     }

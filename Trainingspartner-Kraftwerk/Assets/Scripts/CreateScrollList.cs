@@ -4,12 +4,7 @@ using UnityEngine.EventSystems;
 using System.Collections;
 using System.Collections.Generic;
 
-// Man benötigt einige zusätzliche Bibliotheken
-
-
-
 // System.serializable bedeutet, dass diese Items im Editor angezeigt werden 
-
 [System.Serializable]
 public class Item {
     

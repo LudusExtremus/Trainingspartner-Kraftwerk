@@ -6,6 +6,7 @@ using System.Linq;
 using System;
 using System.Collections;
 using System.Threading.Tasks;
+using System.IO;
 
 public class Messaging : MonoBehaviour {
 
@@ -24,6 +25,7 @@ public class Messaging : MonoBehaviour {
 
     private int messageLimit = 0;
     private ParseUser partner;
+
     // Use this for initialization
     void Start()
     {
@@ -32,18 +34,19 @@ public class Messaging : MonoBehaviour {
         fetchUserPartners();
     }
 
-    private static void fetchUserPartners()
+    private void fetchUserPartners()
     {
         List<ParseUser> userPartners = getUserPartners();
         foreach (ParseUser user in userPartners)
         {
             if (user != null)
             {
-                user.FetchIfNeededAsync();
-                Debug.Log("fetch ");
+                Task userFetchTask = user.FetchIfNeededAsync();
             }
         }
     }
+
+
 
     // Update is called once per frame
     void Update () {
@@ -111,7 +114,7 @@ public class Messaging : MonoBehaviour {
                 {
                     if (item.gameObject.name.Equals("UserImage"))
                     {
-                        StartCoroutine(setUserPicture(partner.Get<ParseFile>("picture"), item.GetComponent<Image>()));
+                        StartCoroutine(setUserPicture(partner, partner.Get<ParseFile>("picture"), item.GetComponent<Image>()));
                     }
                     if (item.gameObject.name.Equals("UserName"))
                     {
@@ -122,14 +125,29 @@ public class Messaging : MonoBehaviour {
         }
     }
 
-    IEnumerator setUserPicture(ParseFile pictureFile, Image userImage)
+    IEnumerator setUserPicture(ParseUser user, ParseFile pictureFile, Image userImage)
     {
         Sprite image = anonymous;
+        string path = Application.persistentDataPath + "/" + user.ObjectId + UserSearch.FILENAME_PROFILE_PIC;
         if (pictureFile != null)
         {
-            var pictureRequest = new WWW(pictureFile.Url.AbsoluteUri);
-            yield return pictureRequest;
-            image = Sprite.Create(pictureRequest.texture, new Rect(0, 0, pictureRequest.texture.width, pictureRequest.texture.height), new Vector2(0.5f, 0.5f));
+            if (File.Exists(path))
+            {
+                var fileData = File.ReadAllBytes(path);
+                var tex = new Texture2D(2, 2);
+                tex.LoadImage(fileData);
+                image = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
+                Debug.Log("User Open file");
+            }
+            else
+            {
+                var pictureRequest = new WWW(pictureFile.Url.AbsoluteUri);
+                yield return pictureRequest;
+                byte[] fileBytes = pictureRequest.texture.EncodeToJPG(25);
+                File.WriteAllBytes(path, fileBytes);
+                image = Sprite.Create(pictureRequest.texture, new Rect(0, 0, pictureRequest.texture.width, pictureRequest.texture.height), new Vector2(0.5f, 0.5f));
+                Debug.Log("User Download file");
+            }
         }
         userImage.overrideSprite = image;
     }
