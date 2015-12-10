@@ -151,7 +151,6 @@ public class Messaging : MonoBehaviour {
             ParseUser.CurrentUser["partners"] = partners;
             ParseUser.CurrentUser.SaveAsync();
         }
-        EventManager.changeMenuState(MenuState.create_message);
     }
 
     private bool listContainsPartner(List<ParseUser> partners, ParseUser partner)
@@ -180,6 +179,10 @@ public class Messaging : MonoBehaviour {
     private void enterConversation(ParseUser partner)
     {
         leaveConversation();
+        if (!getUserPartners().Contains(partner))
+        {
+            conversationAdded(partner);
+        }
         this.partner = partner;
         chatUsername.GetComponent<Text>().text = (string)partner["nick"];
         InvokeRepeating("updateMessages", 0, intervalTime);
@@ -281,6 +284,8 @@ public class Messaging : MonoBehaviour {
 
     public void addMessage(string message,ParseUser receiver)
     {
+        if(receiver==null)
+            return;
         ParseObject parseMessage = new ParseObject("Message");
         parseMessage["message_text"] = message;
         parseMessage["receiver"] = receiver;

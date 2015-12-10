@@ -1267,7 +1267,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ba11beee3c0d4143b5d1856a47d48de, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  myMenuState: 2
+  myMenuState: 3
 --- !u!114 &11496910
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1695,7 +1695,7 @@ Prefab:
     m_Modifications:
     - target: {fileID: 0}
       propertyPath: myMenuState
-      value: 2
+      value: 3
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}

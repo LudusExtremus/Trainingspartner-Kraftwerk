@@ -27,13 +27,6 @@ public class TriggerMenuState : MonoBehaviour {
         {
             if (GetComponent<UserEntry>().getUser() != null)
             {
-                if ((menuState == MenuState.messages))
-                {
-                    ParseUser user = GetComponent<UserEntry>().getUser();
-                    GetComponent<UserEntry>().setUser(null);
-                    EventManager.addConversation(user);
-                    return;
-                }
                 if ((menuState == MenuState.create_message))
                 {
                     ParseUser user = GetComponent<UserEntry>().getUser();

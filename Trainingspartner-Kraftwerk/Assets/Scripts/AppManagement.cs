@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 using System;
+using System.Collections;
 
 public class AppManagement : MonoBehaviour {
 
@@ -73,19 +74,24 @@ public class AppManagement : MonoBehaviour {
     // Use this for initialization
     void Start () {
         changeMenuState(currentMenuState);
-        if (!checkInternetConnection())
-        {
-            showConnectionError();
 
-        } else
-        {
-            EventManager.appInitFinished = true;
-        }
+        StartCoroutine(checkInternetConnection((isConnected) => {
+            if (!isConnected)
+            {
+                showConnectionError();
+            }
+            else
+            {
+                EventManager.appInitFinished = true;
+                Debug.Log("connection success");
+            }
+        }));
+        
 	}
 
     private void showConnectionError()
     {
-        throw new NotImplementedException();
+        Debug.Log("connection failed");
         // TODO Show full screen error message
         // if connected click on fullscreen error message to -> Application.LoadLevel(0);
     }
@@ -104,25 +110,17 @@ public class AppManagement : MonoBehaviour {
         }
     }
 
-    private bool checkInternetConnection()
+    IEnumerator checkInternetConnection(Action<bool> action)
     {
-        System.Net.WebClient client = null;
-        System.IO.Stream stream = null;
-
-        try
+        WWW www = new WWW("http://google.com");
+        yield return www;
+        if (www.error != null)
         {
-            client = new System.Net.WebClient();
-            stream = client.OpenRead("http://www.google.com");
-            return true;
+            action(false);
         }
-        catch (Exception ex)
+        else
         {
-            return false;
-        }
-        finally
-        {
-            if (client != null) { client.Dispose(); }
-            if (stream != null) { stream.Dispose(); }
+            action(true);
         }
     }
 }
