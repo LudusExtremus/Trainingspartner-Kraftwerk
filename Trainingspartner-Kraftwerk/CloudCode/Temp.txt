@@ -1,0 +1,17 @@
+Your Cloud Code has been created at C:\Users\canad\Documents\Trainingspartner App\Trainingspartner-Kraftwerk\CloudCode.
+
+This includes a "Hello world" cloud function, so once you deploy,
+you can test that it works, with the printed curl command.
+
+Next, you might want to deploy this code with:
+
+        cd C:\Users\canad\Documents\Trainingspartner App\Trainingspartner-Kraftwerk\CloudCode
+        parse deploy
+
+Once deployed you can test that it works by running:
+curl -X POST \
+ -H "X-Parse-Application-Id: O40o7ZAc0abwQZZsWO8p6VNCzDEbkLwLqqCBq3Fm" \
+ -H "X-Parse-REST-API-Key: XZ8ECp387Hrd6f1ey2YRRywVXAP18OL4aLshNwtw" \
+ -H "Content-Type: application/json" \
+ -d '{}' \
+ https://api.parse.com/1/functions/hello

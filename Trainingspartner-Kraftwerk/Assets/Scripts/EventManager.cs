@@ -12,9 +12,6 @@ public class EventManager : MonoBehaviour {
     public delegate void MenuStateChanged(MenuState state);
     public static event MenuStateChanged onMenuStateChanged;
 
-    public delegate void AddConversation(ParseUser user);
-    public static event AddConversation onConversationAdded;
-
     public delegate void EnterConversation(ParseUser user);
     public static event EnterConversation onConversationEntered;
 
@@ -26,11 +23,6 @@ public class EventManager : MonoBehaviour {
     public static void changeMenuState(MenuState state)
     {
         onMenuStateChanged(state);
-    }
-
-    public static void addConversation(ParseUser user)
-    {
-        onConversationAdded(user);
     }
 
     public static void enterConversation(ParseUser user)

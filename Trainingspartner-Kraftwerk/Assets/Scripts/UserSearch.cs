@@ -56,14 +56,16 @@ public class UserSearch : MonoBehaviour {
 
     IEnumerator searchAsync()
     {
-        List<ParseUser> users = new List<ParseUser>();
-        ParseQuery<ParseObject> query = buildTimeTableQuery(selectedTimes);
+       List<ParseUser> users = new List<ParseUser>();
+       ParseQuery<ParseObject> query = buildTimeTableQuery(selectedTimes);
        Task task = query.FindAsync().ContinueWith(t =>
         {
             IEnumerable<ParseObject> timeTables = t.Result;
             foreach (var userTimeTable in timeTables)
             {
                 ParseUser user = userTimeTable.Get<ParseUser>("user");
+                if (user.ObjectId == ParseUser.CurrentUser.ObjectId)
+                    continue;
                 List<string> cats = user.Get<List<object>>("categories").Select(s => (string)s).ToList();
                 bool userContainsAnyCategory = cats.Any(s => selectedCategories.Contains(s));
                 if (userContainsAnyCategory)

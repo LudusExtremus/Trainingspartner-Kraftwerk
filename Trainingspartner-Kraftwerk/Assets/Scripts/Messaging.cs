@@ -11,7 +11,7 @@ using System.IO;
 public class Messaging : MonoBehaviour {
 
     public int initialMessageLimit = 50;
-    public int intervalTime = 5;
+    public int intervalTime = 10;
 
     public GameObject conversationContentPanel;
     public GameObject conversationEntry;
@@ -23,46 +23,97 @@ public class Messaging : MonoBehaviour {
     public GameObject chatEntryPartner;
     public GameObject chatField;
 
+    public ScrollRect messageScroller;
+
     private int messageLimit = 0;
     private ParseUser partner;
 
-    // Use this for initialization
+    private List<ParseUser> partnerList = new List<ParseUser>();
+
+    private bool fetchingFinished = true;
+
     void Start()
     {
         messageLimit = initialMessageLimit;
         //enterConversation(null);
-        fetchUserPartners();
+        StartCoroutine(fetchUserPartners());
     }
 
-    private void fetchUserPartners()
+    /*
+   private void fetchUserPartners()
+   {
+       List<ParseUser> userPartners = getUserPartners(ParseUser.CurrentUser);
+       foreach (ParseUser user in userPartners)
+       {
+           if (user != null)
+           {
+               Task userFetchTask = user.FetchIfNeededAsync();
+           }
+       }
+    }
+    */
+
+    IEnumerator fetchUserPartners()
     {
-        List<ParseUser> userPartners = getUserPartners();
-        foreach (ParseUser user in userPartners)
+        if (fetchingFinished)
         {
-            if (user != null)
+            fetchingFinished = false;
+            partnerList = new List<ParseUser>(getPartners(ParseUser.CurrentUser));
+            foreach (ParseUser partner in partnerList)
             {
-                Task userFetchTask = user.FetchIfNeededAsync();
+                Task userFetchTask = partner.FetchIfNeededAsync();
+                while (!userFetchTask.IsCompleted) yield return null;
             }
+            bool partnerAdded = false;
+            ParseQuery<ParseUser> query = new ParseQuery<ParseUser>().WhereEqualTo("partners", ParseUser.CurrentUser);
+            List<ParseUser> newPartners = new List<ParseUser>();
+            Task queryTask = query.FindAsync().ContinueWith(t =>
+            {
+                IEnumerable<ParseUser> users = t.Result;
+                foreach (ParseUser user in users)
+                {
+                    if (!listContainsPartner(partnerList, user))
+                    {
+                        partnerAdded = true;
+                        partnerList.Add(user);
+                        newPartners.Add(user);
+                        Debug.Log("added partner " + (string)user["nick"]);
+                    }
+                }
+            });
+            while (!queryTask.IsCompleted) yield return null;
+            if (partnerAdded)
+            {
+                ParseUser.CurrentUser["partners"] = partnerList;
+                Task updateUserTask = ParseUser.CurrentUser.SaveAsync();
+                while (!updateUserTask.IsCompleted) yield return null;
+            }
+            fillUserPartners(newPartners);
+            fetchingFinished = true;
         }
     }
-
-
 
     // Update is called once per frame
     void Update () {
 	    
 	}
 
+    void OnGUI()
+    {
+        if (Event.current.keyCode == KeyCode.Return)
+        {
+            sendMessage();
+        }
+    }
+
     void OnEnable()
     {
-        EventManager.onConversationAdded += conversationAdded;
         EventManager.onMenuStateChanged += menuStateChanged;
         EventManager.onConversationEntered += enterConversation;
     }
 
     void OnDisable()
     {
-        EventManager.onConversationAdded -= conversationAdded;
         EventManager.onMenuStateChanged -= menuStateChanged;
         EventManager.onConversationEntered -= enterConversation;
     }
@@ -71,10 +122,17 @@ public class Messaging : MonoBehaviour {
     {
         if (menuState == MenuState.messages)
         {
-            fetchUserPartners();
-            fillUserPartners();
+            StartCoroutine(fetchUserPartners());
         }
-        leaveConversation();
+        
+        if (menuState == MenuState.create_message)
+        {
+            if(partner!=null)
+                InvokeRepeating("updateMessages", 1, intervalTime);
+        } else
+        {
+            leaveConversation();
+        }
     }
 
     void OnApplicationPause(bool paused)
@@ -90,9 +148,10 @@ public class Messaging : MonoBehaviour {
         }
     }
 
-    public void fillUserPartners()
+    public void fillUserPartners(List<ParseUser> newPartners)
     {
-        List<ParseUser> partners = getUserPartners();
+        List<ParseUser> partners = partnerList;
+            //getUserPartners(ParseUser.CurrentUser);
         if (conversationContentPanel.GetComponent<RectTransform>().childCount!=partners.Count)
         {
             foreach (RectTransform partnerRect in conversationContentPanel.GetComponent<RectTransform>())
@@ -106,6 +165,8 @@ public class Messaging : MonoBehaviour {
                 GameObject conversationGO = Instantiate(conversationEntry) as GameObject;
                 conversationGO.GetComponent<RectTransform>().SetParent(conversationContentPanel.GetComponent<RectTransform>(),false);
                 conversationGO.GetComponent<UserEntry>().setUser(partner);
+                if(listContainsPartner(newPartners,partner))
+                    conversationGO.GetComponent<Image>().color = Color.green;
                 foreach (RectTransform item in conversationGO.GetComponent<RectTransform>())
                 {
                     if (item.gameObject.name.Equals("UserImage"))
@@ -148,30 +209,25 @@ public class Messaging : MonoBehaviour {
         userImage.overrideSprite = image;
     }
 
-    private void conversationAdded(ParseUser partner)
+    private Task conversationAdded(ParseUser user, ParseUser partner)
     {
         Debug.Log("add conversation  ");
-        this.partner = partner;
-        List<ParseUser> partners = getUserPartners();
-        Debug.Log("size  " + partners.Count);
-        foreach (ParseUser p in partners)
-        {
-            Debug.Log("partner " + (string)p["nick"]);
-        }
+        List<ParseUser> partners = partnerList;
+            //getUserPartners(user);
         if (!listContainsPartner(partners,partner))
         {
             Debug.Log("added partner");
             partners.Add(partner);
-            ParseUser.CurrentUser["partners"] = partners;
-            ParseUser.CurrentUser.SaveAsync();
+            user["partners"] = partners;
+            return user.SaveAsync();
         }
+        return null;
     }
 
     private bool listContainsPartner(List<ParseUser> partners, ParseUser partner)
     {
         foreach (ParseUser user in partners)
         {
-            Debug.Log("user id " + user.ObjectId);
             if (user.ObjectId.Equals(partner.ObjectId))
             {
                 return true;
@@ -180,27 +236,70 @@ public class Messaging : MonoBehaviour {
         return false;
     }
 
-    private static List<ParseUser> getUserPartners()
+    private static List<ParseUser> getPartners(ParseUser user)
     {
         List<ParseUser> partners = null;
-        if (ParseUser.CurrentUser["partners"].GetType() == typeof(List<object>))
-            partners = ParseUser.CurrentUser.Get<List<object>>("partners").Select(u => (ParseUser)u).ToList();
+        if (user["partners"].GetType() == typeof(List<object>))
+            partners = user.Get<List<object>>("partners").Select(u => (ParseUser)u).ToList();
         else
-            partners = ParseUser.CurrentUser.Get<List<ParseUser>>("partners").Select(u => (ParseUser)u).ToList();
+            partners = user.Get<List<ParseUser>>("partners").Select(u => (ParseUser)u).ToList();
         return partners;
     }
 
     private void enterConversation(ParseUser partner)
     {
         leaveConversation();
-        if (!getUserPartners().Contains(partner))
-        {
-            conversationAdded(partner);
-        }
-        this.partner = partner;
         chatUsername.GetComponent<Text>().text = (string)partner["nick"];
+        //getUserPartners(ParseUser.CurrentUser)
+        if (!partnerList.Contains(partner))
+        {
+            Task saveCurrentUserTask = conversationAdded(ParseUser.CurrentUser, partner);
+            StartCoroutine(saveCurrentUserInvokeUpdates(partner, saveCurrentUserTask));
+        } else
+        {
+            this.partner = partner;
+        }
+        Debug.Log("enter conversation");
+    }
+
+    IEnumerator saveCurrentUserInvokeUpdates(ParseUser partner, Task saveCurrentUserTask)
+    {
+        if (saveCurrentUserTask != null)
+            while (!saveCurrentUserTask.IsCompleted) yield return null;
+        else
+            Debug.Log("ERROR SAVING PARTNER TO CURRENT USER");
+
+        //ParseCloud.CallFunctionAsync<ParseUser>("updatePartners", new Dictionary<string, object>());
+
+        this.partner = partner;
         InvokeRepeating("updateMessages", 0, intervalTime);
     }
+    /*
+    IEnumerator AddLocalUserToPartnersPartnerList(ParseUser partner, Task saveCurrentUserTask)
+    {
+        if(saveCurrentUserTask!=null)
+            while (!saveCurrentUserTask.IsCompleted) yield return null;
+        Task fetchUserTask = partner.FetchAsync();
+        Debug.Log("fetch async " );
+        while (!fetchUserTask.IsCompleted) yield return null;
+        Debug.Log("fetch completed " + fetchUserTask.IsFaulted);
+        if (!fetchUserTask.IsFaulted)
+        {
+            List<ParseUser> partners = getUserPartners(partner);
+            if (!partners.Contains(ParseUser.CurrentUser))
+            {
+                Debug.Log("partners not contains current user");
+                partners.Add(partner);
+                partner["partners"] = partners;
+                Task partnerSaveTask = partner.SaveAsync();
+                while(!partnerSaveTask.IsCompleted) yield return null;
+                Debug.Log("partner partners saved " + partnerSaveTask.IsFaulted);
+            }
+        }
+        this.partner = partner;
+        InvokeRepeating("updateMessages", 0, intervalTime);
+    }
+    */
     public void leaveConversation()
     {
         messageLimit = initialMessageLimit;
@@ -210,7 +309,6 @@ public class Messaging : MonoBehaviour {
     public void increaseMessageLimit()
     {
         messageLimit *= 2;
-        updateMessages();
     }
 
     private void deleteMessage(ParseObject message)
@@ -230,6 +328,7 @@ public class Messaging : MonoBehaviour {
 
     public void updateMessages()
     {
+        Debug.Log("updateMessages ");
         StartCoroutine(queryMessages());
     }
 
@@ -263,6 +362,7 @@ public class Messaging : MonoBehaviour {
         {
             createMessageObject(message);
         }
+        messageScroller.verticalNormalizedPosition = 0;
     }
 
     private void removeChatMessages()
@@ -291,9 +391,17 @@ public class Messaging : MonoBehaviour {
         }
     }
 
+
+
     public void sendMessage()
     {
-        addMessage(chatField.GetComponent<InputField>().text,partner);
+        string text = chatField.GetComponent<InputField>().text;
+        if (text.Count() > 0)
+        {
+            chatField.GetComponent<InputField>().text = "";
+            addMessage(text, partner);
+        }
+            
     }
 
     public void addMessage(string message,ParseUser receiver)
