@@ -74,11 +74,7 @@ public class Messaging : MonoBehaviour {
             fetchUserPartners();
             fillUserPartners();
         }
-        if (menuState != MenuState.create_message)
-        {
-            removeChatMessages();
-            leaveConversation();
-        }
+        leaveConversation();
     }
 
     void OnApplicationPause(bool paused)
