@@ -376,7 +376,10 @@ public class Messaging : MonoBehaviour {
     private void createMessageObject(ParseObject message)
     {
         DateTime dateTime = new DateTime(message.Get<long>("timestamp"));
-        string msg =  message.Get<string>("message_text") + " : " + dateTime.ToString();
+        string hour = (dateTime.Hour < 10) ? "0" + dateTime.Hour : "" + dateTime.Hour;
+        string min = (dateTime.Minute < 10) ? "0" + dateTime.Minute : "" + dateTime.Minute;
+        string sec = (dateTime.Second < 10) ? "0" + dateTime.Second : "" + dateTime.Second;
+        string msg =  message.Get<string>("message_text") + " - " + hour + ":" + min + ":" + sec;
         Debug.Log(msg);
         bool isUserMessage = message.Get<ParseUser>("sender").ObjectId.Equals(ParseUser.CurrentUser.ObjectId);
         GameObject messageEntryObject = isUserMessage ? chatEntryUser : chatEntryPartner;

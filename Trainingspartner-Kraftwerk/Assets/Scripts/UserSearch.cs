@@ -18,7 +18,8 @@ public class UserSearch : MonoBehaviour {
     public RectTransform categoriesPanel;
     public RectTransform timesPanel;
     public Sprite anonymous;
-    
+
+    public GameObject userSearchNotification;
 
     public bool allowMultipleTimesAndCategories = false;
 
@@ -51,6 +52,7 @@ public class UserSearch : MonoBehaviour {
             clearList();
             return;
         }
+        userSearchNotification.SetActive(true);
         StartCoroutine(searchAsync());
     }
 
@@ -78,6 +80,7 @@ public class UserSearch : MonoBehaviour {
         {
             populateList(users);
         }
+        userSearchNotification.SetActive(false);
     }
 
     private void clearList()

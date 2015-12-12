@@ -22,14 +22,20 @@ public class UserManagement : MonoBehaviour
 
     public GameObject timeTogglePanel;
 
+    public GameObject profileUpdateNotification;
+    public int notificationTime = 2;
+
     List<string> times = new List<string>() { "Mon_Mor", "Mon_Eve", "Mon_Noon", "Tue_Mor", "Tue_Eve", "Tue_Noon", "Wed_Mor", "Wed_Eve", "Wed_Noon", "Thu_Mor", "Thu_Eve", "Thu_Noon", "Fri_Mor", "Fri_Eve", "Fri_Noon", "Sat_Mor", "Sat_Eve", "Sat_Noon", "Sun_Mor", "Sun_Eve", "Sun_Noon" };
 
     public Image userImage;
     public Sprite anonymous;
 
+    public int profilePictureSize = 400;
+
     private const string FILENAME_PROFILE_PIC = "profile_picture.png";
     private Texture2D profilePicTexture;
     private string errorMessage = "";
+    private bool userUpdateAllowed = true;
     //private string path = Application.persistentDataPath + "/Resources/profile.jpg";
 
     void OnEnable()
@@ -70,11 +76,52 @@ public class UserManagement : MonoBehaviour
     }
     void OnImageLoad(string imgPath, Texture2D tex)
     {
+        tex = resizeTexture(tex, profilePictureSize);
         Sprite sprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
         userImage.overrideSprite = sprite;
         uploadImage(tex);
         Debug.Log("Image Location : " + imgPath);
     }
+
+    private Texture2D resizeTexture(Texture2D tex, int size)
+    {
+        int width = tex.width;
+        int height = tex.height;
+        if ((width == 0) || (height == 0))
+        {
+            return null;
+        }
+        if (width > size)
+        {
+            width = size;
+            height = (width * tex.height) / tex.width;
+        }
+        if (height > size)
+        {
+            height = size;
+            width = (height * tex.width) / tex.height;
+        }
+
+        return (ScaleTexture(tex, width, height));
+    }
+
+    private Texture2D ScaleTexture(Texture2D source, int targetWidth, int targetHeight)
+    {
+        Texture2D result = new Texture2D(targetWidth, targetHeight, source.format, false);
+        float incX = (1.0f / (float)targetWidth);
+        float incY = (1.0f / (float)targetHeight);
+        for (int i = 0; i < result.height; ++i)
+        {
+            for (int j = 0; j < result.width; ++j)
+            {
+                Color newColor = source.GetPixelBilinear((float)j / (float)result.width, (float)i / (float)result.height);
+                result.SetPixel(j, i, newColor);
+            }
+        }
+        result.Apply();
+        return result;
+    }
+
     void OnError(string errorMsg)
     {
         Debug.Log("Error : " + errorMsg);
@@ -275,7 +322,8 @@ public class UserManagement : MonoBehaviour
                 tex.LoadImage(fileData);
                 image = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
                 Debug.Log("Open file");
-            } else
+            }
+            else
             {
                 //var pictureRequest = WWW.LoadFromCacheOrDownload(pictureFile.Url.AbsoluteUri,1);
                 var pictureRequest = new WWW(pictureFile.Url.AbsoluteUri);
@@ -284,7 +332,6 @@ public class UserManagement : MonoBehaviour
                 File.WriteAllBytes(path, fileBytes);
                 image = Sprite.Create(pictureRequest.texture, new Rect(0, 0, pictureRequest.texture.width, pictureRequest.texture.height), new Vector2(0.5f, 0.5f));
                 Debug.Log("Download file");
-                
             }
         }
         userImage.overrideSprite = image;
@@ -325,10 +372,10 @@ public class UserManagement : MonoBehaviour
             userClimbGradeInput.GetComponent<InputField>().text = (string)ParseUser.CurrentUser["climbingGrade"];
 
             List<string> categories = getUserCategories();
-
+            userUpdateAllowed = false;
             categoryRopeClimbToggle.GetComponent<Toggle>().isOn = categories.Contains("ropeClimb");
             categoryBoulderToggle.GetComponent<Toggle>().isOn = categories.Contains("boulder");
-
+            userUpdateAllowed = true;
             StartCoroutine(updateTimeTable());
             StartCoroutine(setProfilePicture());
         }
@@ -358,11 +405,13 @@ public class UserManagement : MonoBehaviour
         ParseObject timeTable = (ParseObject)ParseUser.CurrentUser["timetable"];
         Task task = timeTable.FetchIfNeededAsync();
         while (!task.IsCompleted) yield return null;
+        userUpdateAllowed = false;
         foreach (Transform timeToggle in timeTogglePanel.transform)
         {
             bool isActive = (bool)timeTable[timeToggle.name];
             timeToggle.gameObject.GetComponent<Toggle>().isOn = isActive;
         }
+        userUpdateAllowed = true;
     }
 
     public void deleteUser()
@@ -425,6 +474,8 @@ public class UserManagement : MonoBehaviour
         while (!saveTask.IsCompleted)
             yield return null;
 
+        showProfileUpdatedMessage(saveTask);
+
         if (saveTask.IsFaulted)
         {
             Debug.LogError("An error occurred while uploading the player file : " + saveTask.Exception.Message);
@@ -449,6 +500,7 @@ public class UserManagement : MonoBehaviour
             {
                 Debug.Log("update successful? " + !t.IsFaulted);
             });
+            StartCoroutine(showProfileUpdatedMessage(task));
             while (!task.IsCompleted) yield return null;
             updateProfileUI(ParseUser.CurrentUser);
         }
@@ -477,11 +529,13 @@ public class UserManagement : MonoBehaviour
 
     public void updateUserRopeClimb(bool active)
     {
-        updateUserCategories("ropeClimb", active);
+        if(userUpdateAllowed)
+            updateUserCategories("ropeClimb", active);
     }
     public void updateUserBoulder(bool active)
     {
-        updateUserCategories("boulder", active);
+        if (userUpdateAllowed)
+            updateUserCategories("boulder", active);
     }
     private void updateUserCategories(string value, bool active)
     {
@@ -516,91 +570,125 @@ public class UserManagement : MonoBehaviour
     {
         ParseObject timeTable = ParseUser.CurrentUser.Get<ParseObject>("timetable");
         timeTable[time] = active;
-        timeTable.SaveAsync();
+        Task saveTask = timeTable.SaveAsync();
+        StartCoroutine(showProfileUpdatedMessage(saveTask));
     }
+
+    IEnumerator showProfileUpdatedMessage(Task saveTask)
+    {
+        while (!saveTask.IsCompleted) yield return null;
+        if (!saveTask.IsFaulted)
+        {
+            profileUpdateNotification.SetActive(true);
+            yield return new WaitForSeconds(notificationTime);
+            profileUpdateNotification.SetActive(false);
+        }
+    }
+
     public void updateUserTimeMon_Mor(bool active)
     {
-        updateUserTimeTable("Mon_Mor", active);
+        if (userUpdateAllowed)
+            updateUserTimeTable("Mon_Mor", active);
     }
     public void updateUserTimeMon_Eve(bool active)
     {
-        updateUserTimeTable("Mon_Eve", active);
+        if (userUpdateAllowed)
+            updateUserTimeTable("Mon_Eve", active);
     }
     public void updateUserTimeMon_Noon(bool active)
     {
-        updateUserTimeTable("Mon_Noon", active);
+        if (userUpdateAllowed)
+            updateUserTimeTable("Mon_Noon", active);
     }
     public void updateUserTimeTue_Mor(bool active)
     {
-        updateUserTimeTable("Tue_Mor", active);
+        if (userUpdateAllowed)
+            updateUserTimeTable("Tue_Mor", active);
     }
     public void updateUserTimeTue_Eve(bool active)
     {
-        updateUserTimeTable("Tue_Eve", active);
+        if (userUpdateAllowed)
+            updateUserTimeTable("Tue_Eve", active);
     }
     public void updateUserTimeTue_Noon(bool active)
     {
-        updateUserTimeTable("Tue_Noon", active);
+        if (userUpdateAllowed)
+            updateUserTimeTable("Tue_Noon", active);
     }
     public void updateUserTimeWed_Mor(bool active)
     {
-        updateUserTimeTable("Wed_Mor", active);
+        if (userUpdateAllowed)
+            updateUserTimeTable("Wed_Mor", active);
     }
     public void updateUserTimeWed_Eve(bool active)
     {
-        updateUserTimeTable("Wed_Eve", active);
+        if (userUpdateAllowed)
+            updateUserTimeTable("Wed_Eve", active);
     }
     public void updateUserTimeWed_Noon(bool active)
     {
-        updateUserTimeTable("Wed_Noon", active);
+        if (userUpdateAllowed)
+            updateUserTimeTable("Wed_Noon", active);
     }
     public void updateUserTimeThu_Mor(bool active)
     {
-        updateUserTimeTable("Thu_Mor", active);
+        if (userUpdateAllowed)
+            updateUserTimeTable("Thu_Mor", active);
     }
     public void updateUserTimeThu_Eve(bool active)
     {
-        updateUserTimeTable("Thu_Eve", active);
+        if (userUpdateAllowed)
+            updateUserTimeTable("Thu_Eve", active);
     }
     public void updateUserTimeThu_Noon(bool active)
     {
-        updateUserTimeTable("Thu_Noon", active);
+        if (userUpdateAllowed)
+            updateUserTimeTable("Thu_Noon", active);
     }
     public void updateUserTimeFri_Mor(bool active)
     {
-        updateUserTimeTable("Fri_Mor", active);
+        if (userUpdateAllowed)
+            updateUserTimeTable("Fri_Mor", active);
     }
     public void updateUserTimeFri_Eve(bool active)
     {
-        updateUserTimeTable("Fri_Eve", active);
+        if (userUpdateAllowed)
+            updateUserTimeTable("Fri_Eve", active);
     }
     public void updateUserTimeFri_Noon(bool active)
     {
-        updateUserTimeTable("Fri_Noon", active);
+        if (userUpdateAllowed)
+            updateUserTimeTable("Fri_Noon", active);
     }
     public void updateUserTimeSat_Mor(bool active)
     {
-        updateUserTimeTable("Sat_Mor", active);
+        if (userUpdateAllowed)
+            updateUserTimeTable("Sat_Mor", active);
     }
     public void updateUserTimeSat_Eve(bool active)
     {
-        updateUserTimeTable("Sat_Eve", active);
+        if (userUpdateAllowed)
+            updateUserTimeTable("Sat_Eve", active);
     }
     public void updateUserTimeSat_Noon(bool active)
     {
-        updateUserTimeTable("Sat_Noon", active);
+        if (userUpdateAllowed)
+            updateUserTimeTable("Sat_Noon", active);
     }
     public void updateUserTimeSun_Mor(bool active)
     {
-        updateUserTimeTable("Sun_Mor", active);
+        if (userUpdateAllowed)
+            updateUserTimeTable("Sun_Mor", active);
     }
     public void updateUserTimeSun_Eve(bool active)
     {
-        updateUserTimeTable("Sun_Eve", active);
+        if (userUpdateAllowed)
+            updateUserTimeTable("Sun_Eve", active);
     }
     public void updateUserTimeSun_Noon(bool active)
     {
-        updateUserTimeTable("Sun_Noon", active);
+        if (userUpdateAllowed)
+            updateUserTimeTable("Sun_Noon", active);
     }
 
 }
