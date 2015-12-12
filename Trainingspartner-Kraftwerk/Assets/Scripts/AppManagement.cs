@@ -22,6 +22,8 @@ public class AppManagement : MonoBehaviour {
     public List<MenuState> messagesStates;
     public List<MenuState> searchStates;
 
+    public GameObject notificationNoInternet;
+
     private MenuState lastTopState = MenuState.info;
     private MenuState currentMenuState = MenuState.info;
 
@@ -89,9 +91,17 @@ public class AppManagement : MonoBehaviour {
         
 	}
 
+    public void restartApp()
+    {
+        Debug.Log("RESTART ...");
+        notificationNoInternet.SetActive(false);
+        Application.LoadLevel(0);
+    }
+
     private void showConnectionError()
     {
         Debug.Log("connection failed");
+        notificationNoInternet.SetActive(true);
         // TODO Show full screen error message
         // if connected click on fullscreen error message to -> Application.LoadLevel(0);
     }
