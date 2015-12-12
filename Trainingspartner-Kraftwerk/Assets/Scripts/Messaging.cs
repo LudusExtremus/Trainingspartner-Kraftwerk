@@ -12,6 +12,7 @@ public class Messaging : MonoBehaviour {
 
     public int initialMessageLimit = 50;
     public int intervalTime = 10;
+    public int longIntervalTime = 60;
 
     public GameObject conversationContentPanel;
     public GameObject conversationEntry;
@@ -35,6 +36,7 @@ public class Messaging : MonoBehaviour {
     private MenuState lastMenuState;
 
     private Dictionary<string, IEnumerable<ParseObject>> userMessages = new Dictionary<string, IEnumerable<ParseObject>>();
+    private List<ParseUser> currentPartnerList;
 
     void Start()
     {
@@ -92,8 +94,11 @@ public class Messaging : MonoBehaviour {
                 Task updateUserTask = ParseUser.CurrentUser.SaveAsync();
                 while (!updateUserTask.IsCompleted) yield return null;
             }
+            currentPartnerList = partnerList;
             fillUserPartners(newPartners);
             fetchingFinished = true;
+            //CancelInvoke("updateMessagesAllUsers");
+            //InvokeRepeating("updateMessagesAllUsers", 0, longIntervalTime);
         }
     }
 
@@ -135,13 +140,16 @@ public class Messaging : MonoBehaviour {
             {
                 bool messagesRestored = restoreMessages(partner);
                 int start = messagesRestored ? intervalTime : 0;
+                //CancelInvoke("updateMessagesAllUsers");
                 InvokeRepeating("updateMessages", start, intervalTime);
             }
         } else
         {
             leaveConversation();
             if (lastMenuState == MenuState.create_message)
+            {
                 removeChatMessages();
+            }
         }
         lastMenuState = menuState;
     }
@@ -283,6 +291,7 @@ public class Messaging : MonoBehaviour {
         //ParseCloud.CallFunctionAsync<ParseUser>("updatePartners", new Dictionary<string, object>());
 
         this.partner = partner;
+        //CancelInvoke("updateMessagesAllUsers");
         InvokeRepeating("updateMessages", 0, intervalTime);
     }
     /*
@@ -315,6 +324,7 @@ public class Messaging : MonoBehaviour {
     {
         messageLimit = initialMessageLimit;
         CancelInvoke("updateMessages");
+        //InvokeRepeating("updateMessagesAllUsers", 0, longIntervalTime);
     }
 
     public void increaseMessageLimit()
@@ -340,10 +350,22 @@ public class Messaging : MonoBehaviour {
     public void updateMessages()
     {
         Debug.Log("updateMessages ");
-        StartCoroutine(queryMessages());
+        StartCoroutine(queryMessages(partner,true));
+    }
+    public void updateMessagesAllUsers()
+    {
+        Debug.Log("updateMessages all Users");
+        if (currentPartnerList != null)
+        {
+            if (currentPartnerList.Count > 0)
+            {
+                foreach(ParseUser user in currentPartnerList)
+                    StartCoroutine(queryMessages(user,false));
+            }
+        }  
     }
 
-    private IEnumerator queryMessages()
+    private IEnumerator queryMessages(ParseUser partner, bool updateUI)
     {
         /*
         Task partnerSearch = ParseUser.Query
@@ -369,7 +391,8 @@ public class Messaging : MonoBehaviour {
                        orderby (m.Get<long>("timestamp")) ascending
                     select m).ToList();
         userMessages[partner.ObjectId] = messageList;
-        showMessages(messageList);
+        if(updateUI)
+            showMessages(messageList);
     }
 
     private bool restoreMessages(ParseUser partner)
