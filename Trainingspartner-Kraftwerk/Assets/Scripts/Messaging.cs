@@ -59,6 +59,20 @@ public class Messaging : MonoBehaviour {
     }
     */
 
+    public void setPartner(string partnerId)
+    {
+        foreach(ParseUser partner in partnerList)
+        {
+            if (partner.ObjectId.Equals(partnerId))
+            {
+                enterConversation(partner);
+                EventManager.changeMenuState(MenuState.create_message);
+                updateMessages();
+                break;
+            }
+        }
+    }
+
     IEnumerator fetchUserPartners()
     {
         if (fetchingFinished)

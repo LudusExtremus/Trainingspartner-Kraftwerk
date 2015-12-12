@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System;
 using System.Collections;
+using Parse;
 
 public class AppManagement : MonoBehaviour {
 
@@ -26,6 +27,29 @@ public class AppManagement : MonoBehaviour {
 
     private MenuState lastTopState = MenuState.info;
     private MenuState currentMenuState = MenuState.info;
+
+    void Awake()
+    {
+        ParsePush.ParsePushNotificationReceived += (sender, args) => {
+#if UNITY_ANDROID
+            AndroidJavaClass parseUnityHelper = new AndroidJavaClass("com.parse.ParseUnityHelper");
+            AndroidJavaClass unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
+            AndroidJavaObject currentActivity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
+
+            // Call default behavior.
+            parseUnityHelper.CallStatic("handleParsePushNotificationReceived", currentActivity, args.StringPayload);
+#endif
+        };
+
+        ParsePush.ParsePushNotificationReceived += (sender, args) => {
+            var payload = args.Payload;
+            object userid;
+            if (payload.TryGetValue("user", out userid))
+            {
+                GetComponent<Messaging>().setPartner(userid as string);
+            }
+        };
+    }
 
     void OnEnable()
     {

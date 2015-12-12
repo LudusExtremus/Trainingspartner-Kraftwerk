@@ -218,6 +218,7 @@ public class UserManagement : MonoBehaviour
         user["categories"] = new List<string>();
         user["partners"] = new List<ParseUser>();
         user["picture"] = null;
+        
         Task signUpTask = user.SignUpAsync();
         signUpTask.ContinueWith(t =>
         {
@@ -247,6 +248,15 @@ public class UserManagement : MonoBehaviour
             Debug.Log("success save time table in user? " + !t.IsFaulted);
         });
         while (!saveUserInTimeTable.IsCompleted) yield return null;
+
+        ParseInstallation.CurrentInstallation["user"] = ParseUser.CurrentUser;
+        Task saveUserInInstallation = ParseInstallation.CurrentInstallation.SaveAsync();
+        saveUserInInstallation.ContinueWith(t =>
+        {
+            Debug.Log("success save user in installation? " + !t.IsFaulted);
+        });
+        while (!saveUserInInstallation.IsCompleted) yield return null;
+
     }
 
     private bool validNick()
