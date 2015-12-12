@@ -127,7 +127,7 @@ public class UserSearch : MonoBehaviour {
                         {
                             item.GetComponent<Text>().text = user.Get<string>("startDate");
                         }
-                        if (item.gameObject.name.Equals("About"))
+                        if (item.gameObject.name.Equals("weight"))
                         {
                             item.GetComponent<Text>().text = user.Get<string>("about");
                         }

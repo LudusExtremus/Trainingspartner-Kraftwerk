@@ -32,6 +32,10 @@ public class Messaging : MonoBehaviour {
 
     private bool fetchingFinished = true;
 
+    private MenuState lastMenuState;
+
+    private Dictionary<string, IEnumerable<ParseObject>> userMessages = new Dictionary<string, IEnumerable<ParseObject>>();
+
     void Start()
     {
         messageLimit = initialMessageLimit;
@@ -127,12 +131,19 @@ public class Messaging : MonoBehaviour {
         
         if (menuState == MenuState.create_message)
         {
-            if(partner!=null)
-                InvokeRepeating("updateMessages", 1, intervalTime);
+            if (partner != null)
+            {
+                bool messagesRestored = restoreMessages(partner);
+                int start = messagesRestored ? intervalTime : 0;
+                InvokeRepeating("updateMessages", start, intervalTime);
+            }
         } else
         {
             leaveConversation();
+            if (lastMenuState == MenuState.create_message)
+                removeChatMessages();
         }
+        lastMenuState = menuState;
     }
 
     void OnApplicationPause(bool paused)
@@ -357,8 +368,26 @@ public class Messaging : MonoBehaviour {
             messageList = (from m in messageList
                        orderby (m.Get<long>("timestamp")) ascending
                     select m).ToList();
+        userMessages[partner.ObjectId] = messageList;
+        showMessages(messageList);
+    }
+
+    private bool restoreMessages(ParseUser partner)
+    {
+        if (userMessages.ContainsKey(partner.ObjectId))
+        {
+            showMessages(userMessages[partner.ObjectId]);
+            return true;
+        } else
+        {
+            return false;
+        }
+    }
+
+    private void showMessages(IEnumerable<ParseObject> messages)
+    {
         removeChatMessages();
-        foreach(ParseObject message in messageList)
+        foreach (ParseObject message in messages)
         {
             createMessageObject(message);
         }
