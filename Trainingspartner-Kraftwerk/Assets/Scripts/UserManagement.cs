@@ -466,6 +466,8 @@ public class UserManagement : MonoBehaviour
 
     IEnumerator UploadPlayerFile(Action<int> callback)
     {
+        string path = Application.persistentDataPath + "/" + FILENAME_PROFILE_PIC;
+
         byte[] fileBytes = profilePicTexture.EncodeToJPG(25);
         ParseFile file = new ParseFile("Profile.jpg", fileBytes, "image/jpeg");
         
@@ -486,7 +488,7 @@ public class UserManagement : MonoBehaviour
             ParseUser.CurrentUser["picture"] = file;
             ParseUser.CurrentUser.SaveAsync();
             Debug.Log("picture save success ");
-           // File.WriteAllBytes(path, fileBytes);
+            File.WriteAllBytes(path, fileBytes);
             callback(1);
         }
     }
