@@ -19,6 +19,7 @@ public class Messaging : MonoBehaviour {
     public Sprite anonymous;
 
     public GameObject chatUsername;
+    public GameObject chatImage;
     public GameObject chatContentPanel;
     public GameObject chatEntryUser;
     public GameObject chatEntryPartner;
@@ -61,14 +62,17 @@ public class Messaging : MonoBehaviour {
 
     public void setPartner(string partnerId)
     {
-        foreach(ParseUser partner in partnerList)
+        if (lastMenuState != MenuState.create_message)
         {
-            if (partner.ObjectId.Equals(partnerId))
+            foreach (ParseUser partner in partnerList)
             {
-                enterConversation(partner);
-                EventManager.changeMenuState(MenuState.create_message);
-                updateMessages();
-                break;
+                if (partner.ObjectId.Equals(partnerId))
+                {
+                    enterConversation(partner);
+                    EventManager.changeMenuState(MenuState.create_message);
+                    updateMessages();
+                    break;
+                }
             }
         }
     }
@@ -153,8 +157,9 @@ public class Messaging : MonoBehaviour {
             if (partner != null)
             {
                 bool messagesRestored = restoreMessages(partner);
-                int start = messagesRestored ? intervalTime : 0;
+                int start = messagesRestored ? intervalTime : 1;
                 //CancelInvoke("updateMessagesAllUsers");
+                updateMessages();
                 InvokeRepeating("updateMessages", start, intervalTime);
             }
         } else
@@ -196,19 +201,41 @@ public class Messaging : MonoBehaviour {
                 if (partner == null)
                     continue;
                 GameObject conversationGO = Instantiate(conversationEntry) as GameObject;
-                conversationGO.GetComponent<RectTransform>().SetParent(conversationContentPanel.GetComponent<RectTransform>(),false);
+                conversationGO.GetComponent<RectTransform>().SetParent(conversationContentPanel.GetComponent<RectTransform>(), false);
                 conversationGO.GetComponent<UserEntry>().setUser(partner);
-                if(listContainsPartner(newPartners,partner))
-                    conversationGO.GetComponent<Image>().color = Color.green;
-                foreach (RectTransform item in conversationGO.GetComponent<RectTransform>())
+                foreach (RectTransform panel in conversationGO.GetComponent<RectTransform>())
                 {
-                    if (item.gameObject.name.Equals("UserImage"))
+                    if (panel.gameObject.name.Equals("UserImage"))
                     {
-                        StartCoroutine(setUserPicture(partner, partner.Get<ParseFile>("picture"), item.GetComponent<Image>()));
+                        foreach (RectTransform item in panel)
+                        {
+                            if (item.gameObject.name.Equals("Image"))
+                            {
+                                StartCoroutine(setUserPicture(partner, partner.Get<ParseFile>("picture"), item.GetComponent<Image>()));
+                            }
+                        }
                     }
-                    if (item.gameObject.name.Equals("UserName"))
+                    if (panel.gameObject.name.Equals("UserData"))
                     {
-                        item.GetComponent<Text>().text = partner.Get<string>("nick");
+                        foreach (RectTransform item in panel)
+                        {
+                            if (item.gameObject.name.Equals("Username"))
+                            {
+                                item.GetComponent<Text>().text = partner.Get<string>("nick");
+                            }
+                            if (item.gameObject.name.Equals("SportLevel"))
+                            {
+                                item.GetComponent<Text>().text = partner.Get<string>("climbingGrade");
+                            }
+                            if (item.gameObject.name.Equals("SportSince"))
+                            {
+                                item.GetComponent<Text>().text = partner.Get<string>("startDate");
+                            }
+                            if (item.gameObject.name.Equals("weight"))
+                            {
+                                item.GetComponent<Text>().text = partner.Get<string>("about");
+                            }
+                        }
                     }
                 }
             }
@@ -283,6 +310,7 @@ public class Messaging : MonoBehaviour {
     {
         leaveConversation();
         chatUsername.GetComponent<Text>().text = (string)partner["nick"];
+        StartCoroutine(setUserPicture(partner, partner.Get<ParseFile>("picture"), chatImage.GetComponent<Image>()));
         //getUserPartners(ParseUser.CurrentUser)
         if (!partnerList.Contains(partner))
         {
@@ -306,7 +334,8 @@ public class Messaging : MonoBehaviour {
 
         this.partner = partner;
         //CancelInvoke("updateMessagesAllUsers");
-        InvokeRepeating("updateMessages", 0, intervalTime);
+        updateMessages();
+        //InvokeRepeating("updateMessages", 0, intervalTime);
     }
     /*
     IEnumerator AddLocalUserToPartnersPartnerList(ParseUser partner, Task saveCurrentUserTask)
