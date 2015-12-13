@@ -37,6 +37,7 @@ public class Messaging : MonoBehaviour {
     private MenuState lastMenuState;
 
     private Dictionary<string, IEnumerable<ParseObject>> userMessages = new Dictionary<string, IEnumerable<ParseObject>>();
+    private Dictionary<string, string> userTempEdit = new Dictionary<string, string>();
     private List<ParseUser> currentPartnerList;
 
     void Start()
@@ -168,6 +169,13 @@ public class Messaging : MonoBehaviour {
             if (lastMenuState == MenuState.create_message)
             {
                 removeChatMessages();
+                if (partner != null)
+                {
+                    string text = chatField.GetComponent<InputField>().text;
+                    userTempEdit[partner.ObjectId] = text;
+                    chatField.GetComponent<InputField>().text = "";
+                }
+                    
             }
         }
         lastMenuState = menuState;
@@ -320,6 +328,10 @@ public class Messaging : MonoBehaviour {
         {
             this.partner = partner;
         }
+        if (userTempEdit.ContainsKey(partner.ObjectId))
+            chatField.GetComponent<InputField>().text = userTempEdit[partner.ObjectId];
+        else
+            chatField.GetComponent<InputField>().text = "";
         Debug.Log("enter conversation");
     }
 
@@ -498,6 +510,7 @@ public class Messaging : MonoBehaviour {
         {
             chatField.GetComponent<InputField>().text = "";
             addMessage(text, partner);
+            userTempEdit[partner.ObjectId] = "";
         }
             
     }

@@ -31,7 +31,7 @@ public class NewsManagement : MonoBehaviour {
     IEnumerator updateNews()
     {
         IEnumerable<ParseObject> news = null;
-        ParseQuery<ParseObject> query = new ParseQuery<ParseObject>("News");
+        ParseQuery<ParseObject> query = new ParseQuery<ParseObject>("News").OrderByDescending("release");
         Task task = query.FindAsync().ContinueWith(t =>
         {
             news = t.Result;
@@ -47,15 +47,27 @@ public class NewsManagement : MonoBehaviour {
                 {
                     foreach (RectTransform subItem in item.GetComponent<RectTransform>())
                     {
-                        if (subItem.gameObject.name.Equals("TextTop"))
+                        if (subItem.gameObject.name.Equals("Image"))
+                        {
+                            if (topic.ContainsKey("image"))
+                                StartCoroutine(loadImage(subItem.GetComponent<Image>(), topic));
+                        }
+                    }
+                }
+                if (item.gameObject.name.Equals("Text"))
+                {
+                    foreach (RectTransform subItem in item.GetComponent<RectTransform>())
+                    {
+                        if (subItem.gameObject.name.Equals("Headline"))
+                        {
+                            subItem.GetComponent<Text>().text = topic.Get<string>("headline");
+                        }
+                        if (subItem.gameObject.name.Equals("Text"))
                         {
                             subItem.GetComponent<Text>().text = topic.Get<string>("text");
                         }
                     }
-                }
-                if (item.gameObject.name.Equals("newsIcon"))
-                {
-                    StartCoroutine(loadImage(item.GetComponent<Image>(), topic));
+                    
                 }
             }
         }
