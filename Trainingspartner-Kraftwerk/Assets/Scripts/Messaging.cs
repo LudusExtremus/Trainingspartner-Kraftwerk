@@ -464,6 +464,8 @@ public class Messaging : MonoBehaviour {
 
     private void showMessages(IEnumerable<ParseObject> messages)
     {
+        if (chatContentPanel.GetComponent<RectTransform>().childCount == messages.Count())
+            return;
         removeChatMessages();
         foreach (ParseObject message in messages)
         {

@@ -58,8 +58,9 @@ public class UserManagement : MonoBehaviour
     {
         //updateTimeTable(times);
         //queryTimeTable();
-        firstLogin();
         //deleteUser();
+
+        firstLogin();
     }
 
     void OnGUI()
