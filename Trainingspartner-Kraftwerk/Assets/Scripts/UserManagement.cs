@@ -24,6 +24,7 @@ public class UserManagement : MonoBehaviour
 
     public GameObject profileUpdateNotification;
     public int notificationTime = 2;
+    public int notificationDelay = 4;
 
     List<string> times = new List<string>() { "Mon_Mor", "Mon_Eve", "Mon_Noon", "Tue_Mor", "Tue_Eve", "Tue_Noon", "Wed_Mor", "Wed_Eve", "Wed_Noon", "Thu_Mor", "Thu_Eve", "Thu_Noon", "Fri_Mor", "Fri_Eve", "Fri_Noon", "Sat_Mor", "Sat_Eve", "Sat_Noon", "Sun_Mor", "Sun_Eve", "Sun_Noon" };
 
@@ -36,6 +37,7 @@ public class UserManagement : MonoBehaviour
     private Texture2D profilePicTexture;
     private string errorMessage = "";
     private bool userUpdateAllowed = true;
+    private long notificationUpdateStart = 0;
     //private string path = Application.persistentDataPath + "/Resources/profile.jpg";
 
     void OnEnable()
@@ -590,11 +592,15 @@ public class UserManagement : MonoBehaviour
     IEnumerator showProfileUpdatedMessage(Task saveTask)
     {
         while (!saveTask.IsCompleted) yield return null;
-        if (!saveTask.IsFaulted)
+        long myNotitificationUpdateStart = DateTime.Now.Ticks;
+        notificationUpdateStart = myNotitificationUpdateStart;
+        yield return new WaitForSeconds(notificationDelay);
+        if ((!saveTask.IsFaulted)&&(notificationUpdateStart==myNotitificationUpdateStart))
         {
             profileUpdateNotification.SetActive(true);
             yield return new WaitForSeconds(notificationTime);
             profileUpdateNotification.SetActive(false);
+
         }
     }
 
