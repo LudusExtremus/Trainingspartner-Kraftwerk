@@ -9,6 +9,7 @@ public enum MenuState {
     feedback,
     news,
     info,
-    back
+    back,
+    tutorial
 
 }

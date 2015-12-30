@@ -16,9 +16,27 @@ public class NewsManagement : MonoBehaviour {
     public const string FILENAME_NEWS_PIC = "_news_picture.jpg";
     // Use this for initialization
     void Start () {
-        clearList();
+        //clearList();
         StartCoroutine(updateNews());
 	}
+
+    void OnEnable()
+    {
+        EventManager.onMenuStateChanged += menuStateChanged;
+    }
+
+    void OnDisable()
+    {
+        EventManager.onMenuStateChanged -= menuStateChanged;
+    }
+
+    private void menuStateChanged(MenuState menuState)
+    {
+        if (menuState == MenuState.news)
+        {
+            StartCoroutine(updateNews());
+        }
+    }
 
     private void clearList()
     {
@@ -31,43 +49,52 @@ public class NewsManagement : MonoBehaviour {
     IEnumerator updateNews()
     {
         IEnumerable<ParseObject> news = null;
-        ParseQuery<ParseObject> query = new ParseQuery<ParseObject>("News").OrderByDescending("release");
+        ParseQuery<ParseObject> query = new ParseQuery<ParseObject>("News").OrderByDescending("release").WhereLessThanOrEqualTo("release",DateTime.Now);
         Task task = query.FindAsync().ContinueWith(t =>
         {
             news = t.Result;
         });
         while (!task.IsCompleted) yield return null;
+        int count = 0;
         foreach (ParseObject topic in news)
         {
-            GameObject newsEntry = Instantiate(listEntry) as GameObject;
-            newsEntry.GetComponent<RectTransform>().SetParent(contentPanel, false);
-            foreach (RectTransform item in newsEntry.GetComponent<RectTransform>())
+            count++;
+        }
+        if (count != contentPanel.childCount)
+        {
+            clearList();
+            foreach (ParseObject topic in news)
             {
-                if (item.gameObject.name.Equals("Image"))
+                GameObject newsEntry = Instantiate(listEntry) as GameObject;
+                newsEntry.GetComponent<RectTransform>().SetParent(contentPanel, false);
+                foreach (RectTransform item in newsEntry.GetComponent<RectTransform>())
                 {
-                    foreach (RectTransform subItem in item.GetComponent<RectTransform>())
+                    if (item.gameObject.name.Equals("Image"))
                     {
-                        if (subItem.gameObject.name.Equals("Image"))
+                        foreach (RectTransform subItem in item.GetComponent<RectTransform>())
                         {
-                            if (topic.ContainsKey("image"))
-                                StartCoroutine(loadImage(subItem.GetComponent<Image>(), topic));
+                            if (subItem.gameObject.name.Equals("Image"))
+                            {
+                                if (topic.ContainsKey("image"))
+                                    StartCoroutine(loadImage(subItem.GetComponent<Image>(), topic));
+                            }
                         }
                     }
-                }
-                if (item.gameObject.name.Equals("Text"))
-                {
-                    foreach (RectTransform subItem in item.GetComponent<RectTransform>())
+                    if (item.gameObject.name.Equals("Text"))
                     {
-                        if (subItem.gameObject.name.Equals("Headline"))
+                        foreach (RectTransform subItem in item.GetComponent<RectTransform>())
                         {
-                            subItem.GetComponent<Text>().text = topic.Get<string>("headline");
+                            if (subItem.gameObject.name.Equals("Headline"))
+                            {
+                                subItem.GetComponent<Text>().text = topic.Get<string>("headline");
+                            }
+                            if (subItem.gameObject.name.Equals("Text"))
+                            {
+                                subItem.GetComponent<Text>().text = topic.Get<string>("text");
+                            }
                         }
-                        if (subItem.gameObject.name.Equals("Text"))
-                        {
-                            subItem.GetComponent<Text>().text = topic.Get<string>("text");
-                        }
+
                     }
-                    
                 }
             }
         }

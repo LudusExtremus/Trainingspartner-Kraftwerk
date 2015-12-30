@@ -51,3 +51,26 @@ request.object.get('sender').fetch().then(function(user) {
             }
         )
 });
+
+Parse.Cloud.afterSave("News", function(request,response) {
+	
+var releaseDate = request.object.get('release');
+var headline = request.object.get('headline');
+var pushQuery = new Parse.Query(Parse.Installation);
+
+Parse.Push.send({
+  where: pushQuery,
+  data: {
+	title: "Neuigkeit",
+    alert: headline
+  },
+  push_time: releaseDate
+}, {
+  success: function() {
+    // Push was successful
+  },
+  error: function(error) {
+    // Handle error
+  }
+});
+});

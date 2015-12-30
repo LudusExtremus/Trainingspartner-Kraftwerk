@@ -142,9 +142,14 @@ public class UserSearch : MonoBehaviour {
     {
         Sprite image = anonymous;
         string path = Application.persistentDataPath + "/" + user.ObjectId + FILENAME_PROFILE_PIC;
+        bool updateExistingProfilePic = false;
+        if (File.Exists(path))
+        {
+            updateExistingProfilePic = DateTime.Compare(File.GetLastWriteTime(path), user.UpdatedAt.Value) < 0;
+        }
         if (pictureFile != null)
         {
-            if (File.Exists(path))
+            if ((File.Exists(path))&&(!updateExistingProfilePic))
             {
                 var fileData = File.ReadAllBytes(path);
                 var tex = new Texture2D(2, 2);

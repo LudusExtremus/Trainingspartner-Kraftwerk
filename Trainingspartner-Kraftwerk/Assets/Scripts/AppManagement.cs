@@ -14,6 +14,7 @@ public class AppManagement : MonoBehaviour {
     public List<GameObject> imageGalleryObjects;
     public List<GameObject> feedbackObjects;
     public List<GameObject> newsObjects;
+    public List<GameObject> tutorialObjects;
 
     public GameObject topNav;
     public GameObject messagesNav;
@@ -95,12 +96,26 @@ public class AppManagement : MonoBehaviour {
             go.SetActive(menuState == MenuState.feedback);
         foreach (GameObject go in newsObjects)
             go.SetActive(menuState == MenuState.news);
+        foreach (GameObject go in tutorialObjects)
+            go.SetActive(menuState == MenuState.tutorial);
     }
 
     // Use this for initialization
     void Start () {
+        bool showTutorial = true;
+        if (PlayerPrefs.HasKey("tutorial_viewed"))
+        {
+            showTutorial = PlayerPrefs.GetInt("tutorial_viewed") == 0;
+        }
+        if (showTutorial)
+        {
+            currentMenuState = MenuState.tutorial;
+        } else
+        {
+            currentMenuState = MenuState.info;
+        }
+            
         changeMenuState(currentMenuState);
-
         StartCoroutine(checkInternetConnection((isConnected) => {
             if (!isConnected)
             {
