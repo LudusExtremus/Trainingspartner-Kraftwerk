@@ -27,6 +27,11 @@ public class Messaging : MonoBehaviour {
 
     public ScrollRect messageScroller;
 
+    public GameObject noPartnersNotification;
+    public int notificationTime = 3;
+
+    public GameObject messagingButton;
+
     private int messageLimit = 0;
     private ParseUser partner;
 
@@ -60,6 +65,28 @@ public class Messaging : MonoBehaviour {
        }
     }
     */
+
+    public void setMessagingButton(bool active)
+    {
+        messagingButton.SetActive(active);
+    }
+
+    public bool hasPartners()
+    {
+        return partnerList.Count > 0;
+    }
+
+    public void showNoPartnersNotification()
+    {
+        noPartnersNotification.SetActive(true);
+        StartCoroutine(hideDelayed());
+    }
+
+    private IEnumerator hideDelayed()
+    {
+        yield return new WaitForSeconds(notificationTime);
+        noPartnersNotification.SetActive(false);
+    }
 
     public void setPartner(string partnerId)
     {
@@ -120,11 +147,6 @@ public class Messaging : MonoBehaviour {
             //InvokeRepeating("updateMessagesAllUsers", 0, longIntervalTime);
         }
     }
-
-    // Update is called once per frame
-    void Update () {
-	    
-	}
 
     void OnGUI()
     {

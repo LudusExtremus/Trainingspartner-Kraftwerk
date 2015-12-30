@@ -33,11 +33,14 @@ public class UserManagement : MonoBehaviour
 
     public int profilePictureSize = 400;
 
+    public GameObject profileInformationNotification;
+
     private const string FILENAME_PROFILE_PIC = "profile_picture.png";
     private Texture2D profilePicTexture;
     private string errorMessage = "";
     private bool userUpdateAllowed = true;
     private long notificationUpdateStart = 0;
+    private bool hasSufficientProfileInformation = false;
     //private string path = Application.persistentDataPath + "/Resources/profile.jpg";
 
     void OnEnable()
@@ -54,6 +57,39 @@ public class UserManagement : MonoBehaviour
         PickerEventListener.onImageLoad -= OnImageLoad;
         PickerEventListener.onError -= OnError;
         PickerEventListener.onCancel -= OnCancel;
+    }
+
+    public void showProfileInformationNotification()
+    {
+        profileInformationNotification.SetActive(true);
+        StartCoroutine(delayedHideProfileNotificationInformation());
+    }
+
+    private IEnumerator delayedHideProfileNotificationInformation()
+    {
+        yield return new WaitForSeconds(notificationDelay);
+        profileInformationNotification.SetActive(false);
+    }
+
+    public bool userHasSufficientProfileInformation()
+    {
+        if (hasSufficientProfileInformation)
+            return true;
+        bool hasNick = ((string)ParseUser.CurrentUser["nick"]).Count() > 0;
+        bool hasCats = getUserCategories().Count > 0;
+        bool hasTime = false;
+        bool hasClimbingGrade = ((string)ParseUser.CurrentUser["climbingGrade"]).Count() > 0;
+        ParseObject timeTable = ParseUser.CurrentUser.Get<ParseObject>("timetable");
+        foreach(string time in times)
+        {
+            if (timeTable.Get<bool>(time))
+            {
+                hasTime = true;
+                break;
+            }
+        }
+        hasSufficientProfileInformation = ((hasNick) && (hasCats) && (hasTime) && (hasClimbingGrade));
+        return hasSufficientProfileInformation;
     }
 
     void Start()
@@ -104,7 +140,6 @@ public class UserManagement : MonoBehaviour
             height = size;
             width = (height * tex.width) / tex.height;
         }
-
         return (ScaleTexture(tex, width, height));
     }
 
@@ -150,6 +185,7 @@ public class UserManagement : MonoBehaviour
         } else
         {
             updateProfileUI(ParseUser.CurrentUser);
+            userHasSufficientProfileInformation();
         }
     }
     
@@ -529,11 +565,15 @@ public class UserManagement : MonoBehaviour
     public void updateUserClimbGrade(string climbingGrade)
     {
         ParseUser.CurrentUser["climbingGrade"] = climbingGrade;
+        if (climbingGrade.Count() == 0)
+            hasSufficientProfileInformation = false;
         StartCoroutine(updateUserAsync());
     }
     public void updateUserNick(string nick)
     {
         ParseUser.CurrentUser["nick"] = nick;
+        if (nick.Count() == 0)
+            hasSufficientProfileInformation = false;
         StartCoroutine(updateUserAsync());
     }
     public void updateUserSportSince(string startDate)
@@ -577,6 +617,8 @@ public class UserManagement : MonoBehaviour
             else
                 return;
         }
+        if (categories.Count() == 0)
+            hasSufficientProfileInformation = false;
         ParseUser.CurrentUser["categories"] = categories;
         StartCoroutine(updateUserAsync());
     }

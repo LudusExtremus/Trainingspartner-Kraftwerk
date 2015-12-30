@@ -7,8 +7,9 @@ public class TriggerMenuState : MonoBehaviour {
 
     public MenuState myMenuState;
 
-	// Use this for initialization
-	void Start () {
+    public GameObject appManager;
+    // Use this for initialization
+    void Start () {
         Button button = GetComponent<Button>();
         button.onClick.AddListener(() =>
         {
@@ -33,6 +34,22 @@ public class TriggerMenuState : MonoBehaviour {
                     //GetComponent<UserEntry>().setUser(null);
                     EventManager.enterConversation(user);
                 }
+            }
+        }
+        if (menuState == MenuState.messages)
+        {
+            if (!appManager.GetComponent<Messaging>().hasPartners())
+            {
+                appManager.GetComponent<Messaging>().showNoPartnersNotification();
+                return;
+            }
+        }
+        if(menuState == MenuState.search)
+        {
+            if (!appManager.GetComponent<UserManagement>().userHasSufficientProfileInformation())
+            {
+                appManager.GetComponent<UserManagement>().showProfileInformationNotification();
+                menuState = MenuState.profile;
             }
         }
         EventManager.changeMenuState(menuState);
