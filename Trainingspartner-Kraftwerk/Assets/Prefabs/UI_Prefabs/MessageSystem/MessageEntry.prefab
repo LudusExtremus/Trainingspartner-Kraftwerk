@@ -67,6 +67,7 @@ GameObject:
   - 114: {fileID: 11423272}
   - 114: {fileID: 11430884}
   - 114: {fileID: 11404560}
+  - 114: {fileID: 11443328}
   m_Layer: 5
   m_Name: UserImage
   m_TagString: Untagged
@@ -344,6 +345,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   myMenuState: 3
+  appManager: {fileID: 0}
 --- !u!114 &11404544
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -524,15 +526,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 0}
-  m_Type: 1
+  m_Sprite: {fileID: 21300000, guid: cfcb93522b25b364a84a3e3d59affe62, type: 3}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -787,6 +789,18 @@ MonoBehaviour:
   m_Spacing: 0
   m_ChildForceExpandWidth: 1
   m_ChildForceExpandHeight: 0
+--- !u!114 &11443328
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 135380}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1200242548, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_ShowMaskGraphic: 1
 --- !u!114 &11444726
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1079,7 +1093,7 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 21300000, guid: 4453632fa74fee74abb84cc61ac31677, type: 3}
+  m_Sprite: {fileID: 21300000, guid: c67c5f87f812a81468044c8f2aa1aa87, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
