@@ -82,6 +82,7 @@ public class UserManagement : MonoBehaviour
         ParseObject timeTable = ParseUser.CurrentUser.Get<ParseObject>("timetable");
         foreach(string time in times)
         {
+            if (timeTable.ContainsKey(time))
             if (timeTable.Get<bool>(time))
             {
                 hasTime = true;
@@ -185,7 +186,6 @@ public class UserManagement : MonoBehaviour
         } else
         {
             updateProfileUI(ParseUser.CurrentUser);
-            userHasSufficientProfileInformation();
         }
     }
     
