@@ -6,23 +6,23 @@ using Parse;
 
 public class AppManagement : MonoBehaviour {
 
-    public List<GameObject> searchObjects;
-    public List<GameObject> profileObjects;
-    public List<GameObject> infoObjects;
-    public List<GameObject> messagesObjects;
-    public List<GameObject> createMessageObjects;
-    public List<GameObject> imageGalleryObjects;
-    public List<GameObject> feedbackObjects;
-    public List<GameObject> newsObjects;
-    public List<GameObject> tutorialObjects;
+    [Serializable]
+    public struct StateObject
+    {
+        public MenuState name;
+        public List<GameObject> objects;
+    }
+    public StateObject[] stateObjects;
 
     public GameObject topNav;
-    public GameObject messagesNav;
+    public GameObject otherNav;
     public GameObject searchNav;
+    public GameObject createMsgNav;
 
     public List<MenuState> topStates;
-    public List<MenuState> messagesStates;
+    public List<MenuState> otherStates;
     public List<MenuState> searchStates;
+    public List<MenuState> createMsgStates;
 
     public GameObject notificationNoInternet;
 
@@ -64,8 +64,16 @@ public class AppManagement : MonoBehaviour {
     private void changeMenuState(MenuState menuState)
     {
         if (menuState == MenuState.back)
-            menuState = lastTopState;
-
+        {
+            if (currentMenuState == MenuState.create_message)
+            {
+                menuState = MenuState.messages;
+            } else
+            {
+                menuState = lastTopState;
+            }
+        }
+            
         currentMenuState = menuState;
 
         if (!topStates.Contains(menuState))
@@ -77,27 +85,18 @@ public class AppManagement : MonoBehaviour {
             topNav.SetActive(true);
         }
 
-        messagesNav.SetActive(messagesStates.Contains(menuState));
+        otherNav.SetActive(otherStates.Contains(menuState));
         searchNav.SetActive(searchStates.Contains(menuState));
+        createMsgNav.SetActive(createMsgStates.Contains(menuState));
 
-        foreach (GameObject go in profileObjects)
-            go.SetActive(menuState == MenuState.profile);
-        foreach (GameObject go in searchObjects)
-            go.SetActive(menuState == MenuState.search);
-        foreach (GameObject go in infoObjects)
-            go.SetActive(menuState == MenuState.info);
-        foreach (GameObject go in messagesObjects)
-            go.SetActive(menuState == MenuState.messages);
-        foreach (GameObject go in createMessageObjects)
-            go.SetActive(menuState == MenuState.create_message);
-        foreach (GameObject go in imageGalleryObjects)
-            go.SetActive(menuState == MenuState.image_galery);
-        foreach (GameObject go in feedbackObjects)
-            go.SetActive(menuState == MenuState.feedback);
-        foreach (GameObject go in newsObjects)
-            go.SetActive(menuState == MenuState.news);
-        foreach (GameObject go in tutorialObjects)
-            go.SetActive(menuState == MenuState.tutorial);
+        foreach(StateObject so in stateObjects)
+        {
+            foreach(GameObject go in so.objects)
+            {
+                go.SetActive(menuState == so.name);
+            }
+        }
+
     }
 
     // Use this for initialization

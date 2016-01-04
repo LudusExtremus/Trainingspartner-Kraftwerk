@@ -10,6 +10,12 @@ public enum MenuState {
     news,
     info,
     back,
-    tutorial
-
+    tutorial,
+    imprint,
+    opt2,
+    opt3,
+    opt4,
+    opt5,
+    opt6,
+    opt7,
 }

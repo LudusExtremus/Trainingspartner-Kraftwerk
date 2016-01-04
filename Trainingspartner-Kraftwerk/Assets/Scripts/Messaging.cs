@@ -228,7 +228,7 @@ public class Messaging : MonoBehaviour {
             }
             foreach (ParseUser partner in partners)
             {
-                if (partner == null)
+                if ((partner == null) || (!partner.ContainsKey("nick")))
                     continue;
                 GameObject conversationGO = Instantiate(conversationEntry) as GameObject;
                 conversationGO.GetComponent<RectTransform>().SetParent(conversationContentPanel.GetComponent<RectTransform>(), false);
@@ -241,7 +241,8 @@ public class Messaging : MonoBehaviour {
                         {
                             if (item.gameObject.name.Equals("Image"))
                             {
-                                StartCoroutine(setUserPicture(partner, partner.Get<ParseFile>("picture"), item.GetComponent<Image>()));
+                                if(partner.ContainsKey("picture"))
+                                    StartCoroutine(setUserPicture(partner, partner.Get<ParseFile>("picture"), item.GetComponent<Image>()));
                             }
                         }
                     }
