@@ -112,6 +112,14 @@ public class UserManagement : MonoBehaviour
         }
     }
 
+    public void setUserActiveSate(bool active)
+    {
+        if(ParseUser.CurrentUser.ContainsKey("active"))
+            ParseUser.CurrentUser["active"] = active;
+        Task saveTask = ParseUser.CurrentUser.SaveAsync();
+        StartCoroutine(showProfileUpdatedMessage(saveTask));
+    }
+
     void OnImageSelect(string imgPath)
     {
         Debug.Log("Image Location : " + imgPath);
@@ -187,10 +195,20 @@ public class UserManagement : MonoBehaviour
             login();
         } else
         {
+            saveCurrentLoginDate();
             updateProfileUI(ParseUser.CurrentUser);
         }
     }
-    
+
+    private void saveCurrentLoginDate()
+    {
+        if (ParseUser.CurrentUser.ContainsKey("lastLogin"))
+        {
+            ParseUser.CurrentUser["lastLogin"] = DateTime.Now;
+            ParseUser.CurrentUser.SaveAsync();
+        }
+    }
+
     void Update()
     {
 
@@ -350,6 +368,7 @@ public class UserManagement : MonoBehaviour
                 Debug.Log("logged in? " + !t.IsFaulted);
             });
             while (!task.IsCompleted) yield return null;
+            saveCurrentLoginDate();
             updateProfileUI(ParseUser.CurrentUser);
         }
     }

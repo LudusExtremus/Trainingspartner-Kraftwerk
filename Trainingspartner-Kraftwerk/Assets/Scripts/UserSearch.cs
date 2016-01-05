@@ -15,11 +15,15 @@ public class UserSearch : MonoBehaviour {
     private List<string> selectedCategories = new List<string>();
     private List<string> selectedTimes = new List<string>();
 
+    public int timeSpanDaysUserNotActive = 365;
+
     public RectTransform categoriesPanel;
     public RectTransform timesPanel;
     public Sprite anonymous;
 
     public GameObject userSearchNotification;
+
+    public Order currentSortOrder = Order.byLastActiveDate;
 
     public bool allowMultipleTimesAndCategories = false;
 
@@ -28,6 +32,7 @@ public class UserSearch : MonoBehaviour {
     public GameObject listEntry;
     // Dies ist das Prefab in dem die children später erzeugt werden
     public Transform contentPanel;
+  
     // Use this for initialization
     void Start () {
 	
@@ -59,18 +64,25 @@ public class UserSearch : MonoBehaviour {
     IEnumerator searchAsync()
     {
        List<ParseUser> users = new List<ParseUser>();
-       ParseQuery<ParseObject> query = buildTimeTableQuery(selectedTimes);
-       Task task = query.FindAsync().ContinueWith(t =>
-        {
-            IEnumerable<ParseObject> timeTables = t.Result;
-            foreach (var userTimeTable in timeTables)
-            {
-                ParseUser user = userTimeTable.Get<ParseUser>("user");
-                if (user.ObjectId == ParseUser.CurrentUser.ObjectId)
-                    continue;
-                List<string> cats = user.Get<List<object>>("categories").Select(s => (string)s).ToList();
-                bool userContainsAnyCategory = cats.Any(s => selectedCategories.Contains(s));
-                if (userContainsAnyCategory)
+       ParseQuery<ParseObject> query = buildTimeTableQuery(selectedTimes).OrderByDescending("lastLogin");
+        Task task = query.FindAsync().ContinueWith(t =>
+         {
+         IEnumerable<ParseObject> timeTables = t.Result;
+         foreach (var userTimeTable in timeTables)
+         {
+            ParseUser user = userTimeTable.Get<ParseUser>("user");
+            bool userSetActive = (bool)user["active"];
+
+                 DateTime lastActiveDate = (DateTime)user["lastLogin"];
+                 TimeSpan span = DateTime.Now - lastActiveDate;
+                 int diffInDays = span.Days;
+                 bool userIsActiveByLogin = diffInDays <= timeSpanDaysUserNotActive;
+
+            if ((user.ObjectId == ParseUser.CurrentUser.ObjectId) || (!userSetActive)|| (!userIsActiveByLogin))
+                continue;
+            List<string> cats = user.Get<List<object>>("categories").Select(s => (string)s).ToList();
+            bool userContainsAnyCategory = cats.Any(s => selectedCategories.Contains(s));
+            if (userContainsAnyCategory)
                     users.Add(user);
             }
         });
@@ -78,9 +90,40 @@ public class UserSearch : MonoBehaviour {
         clearList();
         if (users.Count > 0)
         {
+            SortBy sortOrder = new SortBy(currentSortOrder);
+            users.Sort(sortOrder);
             populateList(users);
         }
         userSearchNotification.SetActive(false);
+    }
+
+    private class SortBy : IComparer<ParseUser>
+    {
+        private Order sortOrder;
+        public SortBy(Order order)
+        {
+            sortOrder = order;
+        }
+        public int Compare(ParseUser user1, ParseUser user2)
+        {
+            if (sortOrder == Order.byLastActiveDate)
+            {
+                return sortByDate(user1, user2);
+            }
+            if (sortOrder == Order.byName)
+            {
+                return sortByName(user1,user2);
+            }
+            return 0;
+        }
+        private int sortByDate(ParseUser user1, ParseUser user2)
+        {
+            return DateTime.Compare((DateTime)user2["lastLogin"], (DateTime)user1["lastLogin"]);
+        }
+        private int sortByName(ParseUser user1, ParseUser user2)
+        {
+            return string.Compare((string)user1["nick"], (string)user2["nick"]);
+        }
     }
 
     private void clearList()
@@ -167,7 +210,8 @@ public class UserSearch : MonoBehaviour {
                 Debug.Log("User Download file");
             }
         }
-        userImage.overrideSprite = image;
+        if(!userImage.IsDestroyed())
+            userImage.overrideSprite = image;
     }
 
 
