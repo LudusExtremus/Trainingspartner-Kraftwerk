@@ -114,10 +114,12 @@ public class UserManagement : MonoBehaviour
 
     public void setUserActiveSate(bool active)
     {
-        if(ParseUser.CurrentUser.ContainsKey("active"))
+        if (ParseUser.CurrentUser.ContainsKey("active"))
+        {
             ParseUser.CurrentUser["active"] = active;
-        Task saveTask = ParseUser.CurrentUser.SaveAsync();
-        StartCoroutine(showProfileUpdatedMessage(saveTask));
+            Task saveTask = ParseUser.CurrentUser.SaveAsync();
+            StartCoroutine(showProfileUpdatedMessage(saveTask));
+        }
     }
 
     void OnImageSelect(string imgPath)
