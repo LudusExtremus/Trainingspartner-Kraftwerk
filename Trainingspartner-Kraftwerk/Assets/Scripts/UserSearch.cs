@@ -23,7 +23,8 @@ public class UserSearch : MonoBehaviour {
 
     public GameObject userSearchNotification;
 
-    public Order currentSortOrder = Order.byLastActiveDate;
+    public string currentSortValue = UserValues.LAST_LOGIN;
+    public Order sortOrder = Order.descending;
 
     public bool allowMultipleTimesAndCategories = false;
 
@@ -64,23 +65,23 @@ public class UserSearch : MonoBehaviour {
     IEnumerator searchAsync()
     {
        List<ParseUser> users = new List<ParseUser>();
-       ParseQuery<ParseObject> query = buildTimeTableQuery(selectedTimes).OrderByDescending("lastLogin");
+       ParseQuery<ParseObject> query = buildTimeTableQuery(selectedTimes);
         Task task = query.FindAsync().ContinueWith(t =>
          {
          IEnumerable<ParseObject> timeTables = t.Result;
          foreach (var userTimeTable in timeTables)
          {
             ParseUser user = userTimeTable.Get<ParseUser>("user");
-            bool userSetActive = (bool)user["active"];
+            bool userSetActive = (bool)user[UserValues.ACTIVE];
 
-                 DateTime lastActiveDate = (DateTime)user["lastLogin"];
+                 DateTime lastActiveDate = (DateTime)user[UserValues.LAST_LOGIN];
                  TimeSpan span = DateTime.Now - lastActiveDate;
                  int diffInDays = span.Days;
                  bool userIsActiveByLogin = diffInDays <= timeSpanDaysUserNotActive;
 
             if ((user.ObjectId == ParseUser.CurrentUser.ObjectId) || (!userSetActive)|| (!userIsActiveByLogin))
                 continue;
-            List<string> cats = user.Get<List<object>>("categories").Select(s => (string)s).ToList();
+            List<string> cats = user.Get<List<object>>(UserValues.CATEGORIES).Select(s => (string)s).ToList();
             bool userContainsAnyCategory = cats.Any(s => selectedCategories.Contains(s));
             if (userContainsAnyCategory)
                     users.Add(user);
@@ -90,7 +91,7 @@ public class UserSearch : MonoBehaviour {
         clearList();
         if (users.Count > 0)
         {
-            SortBy sortOrder = new SortBy(currentSortOrder);
+            SortBy sortOrder = new SortBy(currentSortValue,Order.descending);
             users.Sort(sortOrder);
             populateList(users);
         }
@@ -99,30 +100,35 @@ public class UserSearch : MonoBehaviour {
 
     private class SortBy : IComparer<ParseUser>
     {
-        private Order sortOrder;
-        public SortBy(Order order)
+        private string sortValue;
+        private Order ascDes;
+        public SortBy(string sortValue, Order ascDes)
         {
-            sortOrder = order;
+            this.sortValue = sortValue;
+            this.ascDes = ascDes;
         }
         public int Compare(ParseUser user1, ParseUser user2)
         {
-            if (sortOrder == Order.byLastActiveDate)
+            Type type = user1[sortValue].GetType();
+            int comp = 0;
+            if (type == typeof(string))
             {
-                return sortByDate(user1, user2);
+                comp = string.Compare((string)user1[sortValue], (string)user2[sortValue]);
             }
-            if (sortOrder == Order.byName)
+            if (type == typeof(int))
             {
-                return sortByName(user1,user2);
+                if ((int)user1[sortValue] > (int)user2[sortValue])
+                    comp = 1;
+                if ((int)user1[sortValue] < (int)user2[sortValue])
+                    comp = -1;
             }
-            return 0;
-        }
-        private int sortByDate(ParseUser user1, ParseUser user2)
-        {
-            return DateTime.Compare((DateTime)user2["lastLogin"], (DateTime)user1["lastLogin"]);
-        }
-        private int sortByName(ParseUser user1, ParseUser user2)
-        {
-            return string.Compare((string)user1["nick"], (string)user2["nick"]);
+            if (type == typeof(DateTime))
+            {
+                comp = DateTime.Compare((DateTime)user1[sortValue], (DateTime)user2[sortValue]);
+            }
+            if (ascDes == Order.descending)
+                comp *= -1;
+            return comp;
         }
     }
 
@@ -150,7 +156,7 @@ public class UserSearch : MonoBehaviour {
                     {
                         if (item.gameObject.name.Equals("Image"))
                         {
-                            StartCoroutine(setUserPicture(user, user.Get<ParseFile>("picture"), item.GetComponent<Image>()));
+                            StartCoroutine(setUserPicture(user, user.Get<ParseFile>(UserValues.PICTURE), item.GetComponent<Image>()));
                         }
                     }
                 }
@@ -160,7 +166,7 @@ public class UserSearch : MonoBehaviour {
                     {
                         if (item.gameObject.name.Equals("Username"))
                         {
-                            item.GetComponent<Text>().text = user.Get<string>("nick");
+                            item.GetComponent<Text>().text = user.Get<string>(UserValues.NICK);
                         }
                         if (item.gameObject.name.Equals("SportLevel"))
                         {
@@ -168,11 +174,11 @@ public class UserSearch : MonoBehaviour {
                         }
                         if (item.gameObject.name.Equals("SportSince"))
                         {
-                            item.GetComponent<Text>().text = user.Get<string>("startDate");
+                            item.GetComponent<Text>().text = user.Get<string>(UserValues.START_DATE);
                         }
                         if (item.gameObject.name.Equals("weight"))
                         {
-                            item.GetComponent<Text>().text = user.Get<string>("about");
+                            item.GetComponent<Text>().text = user.Get<string>(UserValues.ABOUT);
                         }
                     }
                 }

@@ -117,7 +117,7 @@ public class Messaging : MonoBehaviour {
                 while (!userFetchTask.IsCompleted) yield return null;
             }
             bool partnerAdded = false;
-            ParseQuery<ParseUser> query = new ParseQuery<ParseUser>().WhereEqualTo("partners", ParseUser.CurrentUser);
+            ParseQuery<ParseUser> query = new ParseQuery<ParseUser>().WhereEqualTo(UserValues.PARTNERS, ParseUser.CurrentUser);
             List<ParseUser> newPartners = new List<ParseUser>();
             Task queryTask = query.FindAsync().ContinueWith(t =>
             {
@@ -129,14 +129,14 @@ public class Messaging : MonoBehaviour {
                         partnerAdded = true;
                         partnerList.Add(user);
                         newPartners.Add(user);
-                        Debug.Log("added partner " + (string)user["nick"]);
+                        Debug.Log("added partner " + (string)user[UserValues.NICK]);
                     }
                 }
             });
             while (!queryTask.IsCompleted) yield return null;
             if (partnerAdded)
             {
-                ParseUser.CurrentUser["partners"] = partnerList;
+                ParseUser.CurrentUser[UserValues.PARTNERS] = partnerList;
                 Task updateUserTask = ParseUser.CurrentUser.SaveAsync();
                 while (!updateUserTask.IsCompleted) yield return null;
             }
@@ -228,7 +228,7 @@ public class Messaging : MonoBehaviour {
             }
             foreach (ParseUser partner in partners)
             {
-                if ((partner == null) || (!partner.ContainsKey("nick")))
+                if ((partner == null) || (!partner.ContainsKey(UserValues.NICK)))
                     continue;
                 GameObject conversationGO = Instantiate(conversationEntry) as GameObject;
                 conversationGO.GetComponent<RectTransform>().SetParent(conversationContentPanel.GetComponent<RectTransform>(), false);
@@ -241,8 +241,8 @@ public class Messaging : MonoBehaviour {
                         {
                             if (item.gameObject.name.Equals("Image"))
                             {
-                                if(partner.ContainsKey("picture"))
-                                    StartCoroutine(setUserPicture(partner, partner.Get<ParseFile>("picture"), item.GetComponent<Image>()));
+                                if(partner.ContainsKey(UserValues.PICTURE))
+                                    StartCoroutine(setUserPicture(partner, partner.Get<ParseFile>(UserValues.PICTURE), item.GetComponent<Image>()));
                             }
                         }
                     }
@@ -252,7 +252,7 @@ public class Messaging : MonoBehaviour {
                         {
                             if (item.gameObject.name.Equals("Username"))
                             {
-                                item.GetComponent<Text>().text = partner.Get<string>("nick");
+                                item.GetComponent<Text>().text = partner.Get<string>(UserValues.NICK);
                             }
                             if (item.gameObject.name.Equals("SportLevel"))
                             {
@@ -260,11 +260,11 @@ public class Messaging : MonoBehaviour {
                             }
                             if (item.gameObject.name.Equals("SportSince"))
                             {
-                                item.GetComponent<Text>().text = partner.Get<string>("startDate");
+                                item.GetComponent<Text>().text = partner.Get<string>(UserValues.START_DATE);
                             }
                             if (item.gameObject.name.Equals("weight"))
                             {
-                                item.GetComponent<Text>().text = partner.Get<string>("about");
+                                item.GetComponent<Text>().text = partner.Get<string>(UserValues.ABOUT);
                             }
                         }
                     }
@@ -309,7 +309,7 @@ public class Messaging : MonoBehaviour {
         {
             Debug.Log("added partner");
             partners.Add(partner);
-            user["partners"] = partners;
+            user[UserValues.PARTNERS] = partners;
             return user.SaveAsync();
         }
         return null;
@@ -330,18 +330,18 @@ public class Messaging : MonoBehaviour {
     private static List<ParseUser> getPartners(ParseUser user)
     {
         List<ParseUser> partners = null;
-        if (user["partners"].GetType() == typeof(List<object>))
-            partners = user.Get<List<object>>("partners").Select(u => (ParseUser)u).ToList();
+        if (user[UserValues.PARTNERS].GetType() == typeof(List<object>))
+            partners = user.Get<List<object>>(UserValues.PARTNERS).Select(u => (ParseUser)u).ToList();
         else
-            partners = user.Get<List<ParseUser>>("partners").Select(u => (ParseUser)u).ToList();
+            partners = user.Get<List<ParseUser>>(UserValues.PARTNERS).Select(u => (ParseUser)u).ToList();
         return partners;
     }
 
     private void enterConversation(ParseUser partner)
     {
         leaveConversation();
-        chatUsername.GetComponent<Text>().text = (string)partner["nick"];
-        StartCoroutine(setUserPicture(partner, partner.Get<ParseFile>("picture"), chatImage.GetComponent<Image>()));
+        chatUsername.GetComponent<Text>().text = (string)partner[UserValues.NICK];
+        StartCoroutine(setUserPicture(partner, partner.Get<ParseFile>(UserValues.PICTURE), chatImage.GetComponent<Image>()));
         //getUserPartners(ParseUser.CurrentUser)
         if (!partnerList.Contains(partner))
         {

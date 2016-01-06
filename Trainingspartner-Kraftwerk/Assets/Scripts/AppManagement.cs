@@ -7,7 +7,7 @@ using Parse;
 public class AppManagement : MonoBehaviour {
 
     public bool displayTutorial = false;
-
+    
     [Serializable]
     public struct StateObject
     {

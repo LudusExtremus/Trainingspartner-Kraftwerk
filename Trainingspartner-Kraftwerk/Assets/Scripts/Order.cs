@@ -2,7 +2,12 @@
 public enum Order {
     
     byLastActiveDate,
-    byName
+    byGrade,
+    bySportSince,
+    byName,
+
+    ascending,
+    descending
 
 
 }

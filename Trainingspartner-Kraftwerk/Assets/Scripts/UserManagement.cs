@@ -41,6 +41,7 @@ public class UserManagement : MonoBehaviour
     private bool userUpdateAllowed = true;
     private long notificationUpdateStart = 0;
     private bool hasSufficientProfileInformation = false;
+    private UserValues userValues = null;
     //private string path = Application.persistentDataPath + "/Resources/profile.jpg";
 
     void OnEnable()
@@ -49,6 +50,7 @@ public class UserManagement : MonoBehaviour
         PickerEventListener.onImageLoad += OnImageLoad;
         PickerEventListener.onError += OnError;
         PickerEventListener.onCancel += OnCancel;
+        userValues = GetComponent<UserValues>();
     }
 
     void OnDisable()
@@ -75,11 +77,44 @@ public class UserManagement : MonoBehaviour
     {
         if (hasSufficientProfileInformation)
             return true;
-        bool hasNick = ((string)ParseUser.CurrentUser["nick"]).Count() > 0;
-        bool hasCats = getUserCategories().Count > 0;
+
+        bool hasEmptyRequirement = false;
+        foreach(UserValues.Value val in userValues.coreValues.Concat(userValues.customValues))
+        {
+            if (val.isProfileRequirement)
+            {
+                if (ParseUser.CurrentUser[val.name]==null)
+                {
+                    hasEmptyRequirement = true;
+                    break;
+                } else
+                {
+                    if (val.type == UserValues.FIELD_TYPE.TYPE_String)
+                    {
+                        if (val.isList)
+                        {
+                            if(getStringList(UserValues.CATEGORIES).Count() == 0)
+                            {
+                                hasEmptyRequirement = true;
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            if (((string)ParseUser.CurrentUser[val.name]).Count() == 0)
+                            {
+                                hasEmptyRequirement = true;
+                                break;
+                            }
+                        }
+                    }
+                   
+                }
+            }
+        }
+
         bool hasTime = false;
-        bool hasClimbingGrade = ((string)ParseUser.CurrentUser["climbingGrade"]).Count() > 0;
-        ParseObject timeTable = ParseUser.CurrentUser.Get<ParseObject>("timetable");
+        ParseObject timeTable = ParseUser.CurrentUser.Get<ParseObject>(UserValues.TIMETABLE);
         foreach(string time in times)
         {
             if (timeTable.ContainsKey(time))
@@ -89,7 +124,7 @@ public class UserManagement : MonoBehaviour
                 break;
             }
         }
-        hasSufficientProfileInformation = ((hasNick) && (hasCats) && (hasTime) && (hasClimbingGrade));
+        hasSufficientProfileInformation = ((hasTime) && (!hasEmptyRequirement));
         return hasSufficientProfileInformation;
     }
 
@@ -114,9 +149,9 @@ public class UserManagement : MonoBehaviour
 
     public void setUserActiveSate(bool active)
     {
-        if (ParseUser.CurrentUser.ContainsKey("active"))
+        if (ParseUser.CurrentUser.ContainsKey(UserValues.ACTIVE))
         {
-            ParseUser.CurrentUser["active"] = active;
+            ParseUser.CurrentUser[UserValues.ACTIVE] = active;
             Task saveTask = ParseUser.CurrentUser.SaveAsync();
             StartCoroutine(showProfileUpdatedMessage(saveTask));
         }
@@ -204,9 +239,9 @@ public class UserManagement : MonoBehaviour
 
     private void saveCurrentLoginDate()
     {
-        if (ParseUser.CurrentUser.ContainsKey("lastLogin"))
+        if (ParseUser.CurrentUser.ContainsKey(UserValues.LAST_LOGIN))
         {
-            ParseUser.CurrentUser["lastLogin"] = DateTime.Now;
+            ParseUser.CurrentUser[UserValues.LAST_LOGIN] = DateTime.Now;
             ParseUser.CurrentUser.SaveAsync();
         }
     }
@@ -272,16 +307,39 @@ public class UserManagement : MonoBehaviour
             Username = username,
             Password = username
         };
-        user["nick"] = userNickInput.GetComponent<InputField>().text;
-        user["startDate"] = userTrainingStartInput.GetComponent<InputField>().text;
-        user["about"] = userAboutInput.GetComponent<InputField>().text;
-        user["climbingGrade"] = userClimbGradeInput.GetComponent<InputField>().text;
-        user["categories"] = new List<string>();
-        user["partners"] = new List<ParseUser>();
-        user["active"] = true;
-        user["lastLogin"] = DateTime.Now;
-        user["picture"] = null;
-        
+        foreach (UserValues.Value val in userValues.coreValues.Concat(userValues.customValues))
+        {
+            user[val.name] = null;
+            if (val.isList)
+            {
+                user[val.name] = new List<object>();
+            } else
+            {
+                if (val.type == UserValues.FIELD_TYPE.TYPE_boolean)
+                {
+                    user[val.name] = false;
+                }
+                if (val.type == UserValues.FIELD_TYPE.TYPE_Date)
+                {
+                    user[val.name] = DateTime.Now;
+                }
+                if (val.type == UserValues.FIELD_TYPE.TYPE_String)
+                {
+                    user[val.name] = "";
+                    if (val.inputField != null)
+                    {
+                        user[val.name] = val.inputField.text;
+                    }
+                }
+                if (val.type == UserValues.FIELD_TYPE.TYPE_Integer)
+                {
+                    user[val.name] = 0;
+                }
+            }
+        }
+
+        user[UserValues.ACTIVE] = true;
+
         Task signUpTask = user.SignUpAsync();
         signUpTask.ContinueWith(t =>
         {
@@ -291,7 +349,7 @@ public class UserManagement : MonoBehaviour
 
         ParseObject timeTable = new ParseObject("Timetable");
         timeTable["user"] = user;
-        timeTable["nick"] = userNickInput.GetComponent<InputField>().text;
+        timeTable[UserValues.NICK] = userNickInput.GetComponent<InputField>().text;
         foreach (string time in times)
         {
             timeTable[time] = false;
@@ -304,7 +362,7 @@ public class UserManagement : MonoBehaviour
         });
         while (!saveTimetableTask.IsCompleted) yield return null;
 
-        ParseUser.CurrentUser["timetable"] = timeTable;
+        ParseUser.CurrentUser[UserValues.TIMETABLE] = timeTable;
         Task saveUserInTimeTable = ParseUser.CurrentUser.SaveAsync();
         saveUserInTimeTable.ContinueWith(t =>
         {
@@ -380,9 +438,9 @@ public class UserManagement : MonoBehaviour
         ParseFile pictureFile = null;
         Sprite image = anonymous;
         Debug.Log("set picture ");
-        if (ParseUser.CurrentUser["picture"] != null)
+        if (ParseUser.CurrentUser[UserValues.PICTURE] != null)
         {
-            pictureFile = (ParseFile)ParseUser.CurrentUser["picture"];
+            pictureFile = (ParseFile)ParseUser.CurrentUser[UserValues.PICTURE];
         }
         Debug.Log("pictureFile " + pictureFile);
         string path = Application.persistentDataPath + "/" + FILENAME_PROFILE_PIC;
@@ -440,12 +498,14 @@ public class UserManagement : MonoBehaviour
     {
         if (currentUser != null)
         {
-            userNickInput.GetComponent<InputField>().text = (string)ParseUser.CurrentUser["nick"];
-            userTrainingStartInput.GetComponent<InputField>().text = (string)ParseUser.CurrentUser["startDate"];
-            userAboutInput.GetComponent<InputField>().text = (string)ParseUser.CurrentUser["about"];
-            userClimbGradeInput.GetComponent<InputField>().text = (string)ParseUser.CurrentUser["climbingGrade"];
-
-            List<string> categories = getUserCategories();
+            foreach(UserValues.Value val in userValues.coreValues.Concat(userValues.customValues))
+            {
+                if (val.inputField != null)
+                {
+                    val.inputField.text = (string)ParseUser.CurrentUser[val.name];
+                }
+            }
+            List<string> categories = getStringList(UserValues.CATEGORIES);
             userUpdateAllowed = false;
             categoryRopeClimbToggle.GetComponent<Toggle>().isOn = categories.Contains("ropeClimb");
             categoryBoulderToggle.GetComponent<Toggle>().isOn = categories.Contains("boulder");
@@ -464,19 +524,19 @@ public class UserManagement : MonoBehaviour
         }
     }
 
-    private static List<string> getUserCategories()
+    private static List<string> getStringList(string userValue)
     {
         List<string> categories = null;
-        if (ParseUser.CurrentUser["categories"].GetType() == typeof(List<object>))
-            categories = ParseUser.CurrentUser.Get<List<object>>("categories").Select(s => (string)s).ToList();
+        if (ParseUser.CurrentUser[userValue].GetType() == typeof(List<object>))
+            categories = ParseUser.CurrentUser.Get<List<object>>(userValue).Select(s => (string)s).ToList();
         else
-            categories = ParseUser.CurrentUser.Get<List<string>>("categories").Select(s => (string)s).ToList();
+            categories = ParseUser.CurrentUser.Get<List<string>>(userValue).Select(s => (string)s).ToList();
         return categories;
     }
 
     private IEnumerator updateTimeTable()
     {
-        ParseObject timeTable = (ParseObject)ParseUser.CurrentUser["timetable"];
+        ParseObject timeTable = (ParseObject)ParseUser.CurrentUser[UserValues.TIMETABLE];
         Task task = timeTable.FetchIfNeededAsync();
         while (!task.IsCompleted) yield return null;
         userUpdateAllowed = false;
@@ -497,7 +557,7 @@ public class UserManagement : MonoBehaviour
     {
         ParseUser currentUser = ParseUser.CurrentUser;
 
-        ParseObject timeTable = currentUser.Get<ParseObject>("timetable");
+        ParseObject timeTable = currentUser.Get<ParseObject>(UserValues.TIMETABLE);
         Task deleteTask = timeTable.DeleteAsync();
         deleteTask.ContinueWith(t =>
         {
@@ -559,7 +619,7 @@ public class UserManagement : MonoBehaviour
         }
         else
         {
-            ParseUser.CurrentUser["picture"] = file;
+            ParseUser.CurrentUser[UserValues.PICTURE] = file;
             ParseUser.CurrentUser.SaveAsync();
             Debug.Log("picture save success ");
             File.WriteAllBytes(path, fileBytes);
@@ -584,7 +644,7 @@ public class UserManagement : MonoBehaviour
 
     public void updateUserAbout(string about)
     {
-        ParseUser.CurrentUser["about"] = about;
+        ParseUser.CurrentUser[UserValues.ABOUT] = about;
         StartCoroutine(updateUserAsync());
     }
     public void updateUserClimbGrade(string climbingGrade)
@@ -596,14 +656,14 @@ public class UserManagement : MonoBehaviour
     }
     public void updateUserNick(string nick)
     {
-        ParseUser.CurrentUser["nick"] = nick;
+        ParseUser.CurrentUser[UserValues.NICK] = nick;
         if (nick.Count() == 0)
             hasSufficientProfileInformation = false;
         StartCoroutine(updateUserAsync());
     }
     public void updateUserSportSince(string startDate)
     {
-        ParseUser.CurrentUser["startDate"] = startDate;
+        ParseUser.CurrentUser[UserValues.START_DATE] = startDate;
         StartCoroutine(updateUserAsync());
     }
 
@@ -620,10 +680,10 @@ public class UserManagement : MonoBehaviour
     private void updateUserCategories(string value, bool active)
     {
         List<string> categories = null;
-        if (ParseUser.CurrentUser["categories"].GetType() == typeof(List<object>))
-            categories = ParseUser.CurrentUser.Get<List<object>>("categories").Select(s => (string)s).ToList();
+        if (ParseUser.CurrentUser[UserValues.CATEGORIES].GetType() == typeof(List<object>))
+            categories = ParseUser.CurrentUser.Get<List<object>>(UserValues.CATEGORIES).Select(s => (string)s).ToList();
         else
-            categories = ParseUser.CurrentUser.Get<List<string>>("categories").Select(s => (string)s).ToList();
+            categories = ParseUser.CurrentUser.Get<List<string>>(UserValues.CATEGORIES).Select(s => (string)s).ToList();
         if (active)
         {
             if (!categories.Contains(value))
@@ -650,7 +710,7 @@ public class UserManagement : MonoBehaviour
 
     private void updateUserTimeTable(string time, bool active)
     {
-        ParseObject timeTable = ParseUser.CurrentUser.Get<ParseObject>("timetable");
+        ParseObject timeTable = ParseUser.CurrentUser.Get<ParseObject>(UserValues.TIMETABLE);
         timeTable[time] = active;
         Task saveTask = timeTable.SaveAsync();
         StartCoroutine(showProfileUpdatedMessage(saveTask));
