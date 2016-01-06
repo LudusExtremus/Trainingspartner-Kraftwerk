@@ -49,6 +49,12 @@ public class Messaging : MonoBehaviour {
     {
         messageLimit = initialMessageLimit;
         //enterConversation(null);
+        if(ParseUser.CurrentUser!=null)
+            startFetchPartners();
+    }
+
+    public void startFetchPartners()
+    {
         StartCoroutine(fetchUserPartners());
     }
 
@@ -170,10 +176,6 @@ public class Messaging : MonoBehaviour {
 
     private void menuStateChanged(MenuState menuState)
     {
-        if (menuState == MenuState.messages)
-        {
-            StartCoroutine(fetchUserPartners());
-        }
         
         if (menuState == MenuState.create_message)
         {

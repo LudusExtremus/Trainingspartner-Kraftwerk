@@ -40,6 +40,7 @@ public class TriggerMenuState : MonoBehaviour {
         {
             if (!appManager.GetComponent<Messaging>().hasPartners())
             {
+                appManager.GetComponent<Messaging>().startFetchPartners();
                 appManager.GetComponent<Messaging>().showNoPartnersNotification();
                 return;
             }

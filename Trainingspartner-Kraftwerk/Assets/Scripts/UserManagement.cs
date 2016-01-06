@@ -77,6 +77,8 @@ public class UserManagement : MonoBehaviour
     {
         if (hasSufficientProfileInformation)
             return true;
+        if (ParseUser.CurrentUser == null)
+            return false;
 
         bool hasEmptyRequirement = false;
         foreach(UserValues.Value val in userValues.coreValues.Concat(userValues.customValues))
@@ -101,7 +103,14 @@ public class UserManagement : MonoBehaviour
                         }
                         else
                         {
-                            if (((string)ParseUser.CurrentUser[val.name]).Count() == 0)
+                            if (val.inputField != null)
+                            {
+                                if(val.inputField.text.Count() == 0)
+                                {
+                                    hasEmptyRequirement = true;
+                                    break;
+                                }
+                            } else if (((string)ParseUser.CurrentUser[val.name]).Count() == 0)
                             {
                                 hasEmptyRequirement = true;
                                 break;
@@ -132,10 +141,10 @@ public class UserManagement : MonoBehaviour
     {
         //updateTimeTable(times);
         //queryTimeTable();
-        // deleteUser();
-
-         firstLogin();
-
+        //deleteUser();
+       
+        firstLogin();
+        //registerNewUser();
         //logout();
     }
 
@@ -307,6 +316,7 @@ public class UserManagement : MonoBehaviour
             Username = username,
             Password = username
         };
+        
         foreach (UserValues.Value val in userValues.coreValues.Concat(userValues.customValues))
         {
             user[val.name] = null;
@@ -318,10 +328,6 @@ public class UserManagement : MonoBehaviour
                 if (val.type == UserValues.FIELD_TYPE.TYPE_boolean)
                 {
                     user[val.name] = false;
-                }
-                if (val.type == UserValues.FIELD_TYPE.TYPE_Date)
-                {
-                    user[val.name] = DateTime.Now;
                 }
                 if (val.type == UserValues.FIELD_TYPE.TYPE_String)
                 {
@@ -337,13 +343,13 @@ public class UserManagement : MonoBehaviour
                 }
             }
         }
-
+        
         user[UserValues.ACTIVE] = true;
 
         Task signUpTask = user.SignUpAsync();
         signUpTask.ContinueWith(t =>
         {
-            Debug.Log("success register user? " + !t.IsFaulted);
+            Debug.Log("success register user? " + !t.IsFaulted );
         });
         while (!signUpTask.IsCompleted) yield return null;
 
@@ -369,6 +375,9 @@ public class UserManagement : MonoBehaviour
             Debug.Log("success save time table in user? " + !t.IsFaulted);
         });
         while (!saveUserInTimeTable.IsCompleted) yield return null;
+
+        user[UserValues.LAST_LOGIN] = DateTime.Now;
+        user.SaveAsync();
 
         ParseInstallation.CurrentInstallation["user"] = ParseUser.CurrentUser;
         Task saveUserInInstallation = ParseInstallation.CurrentInstallation.SaveAsync();
