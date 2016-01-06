@@ -6,6 +6,8 @@ using Parse;
 
 public class AppManagement : MonoBehaviour {
 
+    public bool displayTutorial = false;
+
     [Serializable]
     public struct StateObject
     {
@@ -106,7 +108,7 @@ public class AppManagement : MonoBehaviour {
         {
             showTutorial = PlayerPrefs.GetInt("tutorial_viewed") == 0;
         }
-        if (showTutorial)
+        if ((showTutorial)||(displayTutorial))
         {
             currentMenuState = MenuState.tutorial;
         } else
