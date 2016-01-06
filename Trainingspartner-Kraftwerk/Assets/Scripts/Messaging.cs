@@ -49,13 +49,13 @@ public class Messaging : MonoBehaviour {
     {
         messageLimit = initialMessageLimit;
         //enterConversation(null);
-        if(ParseUser.CurrentUser!=null)
-            startFetchPartners();
+        startFetchPartners();
     }
 
     public void startFetchPartners()
     {
-        StartCoroutine(fetchUserPartners());
+        if(ParseUser.CurrentUser!=null)
+            StartCoroutine(fetchUserPartners());
     }
 
     /*
@@ -176,6 +176,10 @@ public class Messaging : MonoBehaviour {
 
     private void menuStateChanged(MenuState menuState)
     {
+        if (menuState == MenuState.messages)
+        {
+            startFetchPartners();
+        }
         
         if (menuState == MenuState.create_message)
         {
@@ -372,6 +376,7 @@ public class Messaging : MonoBehaviour {
         this.partner = partner;
         //CancelInvoke("updateMessagesAllUsers");
         updateMessages();
+        startFetchPartners();
         //InvokeRepeating("updateMessages", 0, intervalTime);
     }
     /*
