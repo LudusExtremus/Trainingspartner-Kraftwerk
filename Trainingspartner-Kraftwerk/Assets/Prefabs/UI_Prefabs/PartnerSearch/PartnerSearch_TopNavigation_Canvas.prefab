@@ -372,7 +372,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 0, b: .765517235, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -1049,7 +1049,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ba11beee3c0d4143b5d1856a47d48de, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  myMenuState: 2
+  myMenuState: 10
   appManager: {fileID: 0}
 --- !u!114 &11477624
 MonoBehaviour:
