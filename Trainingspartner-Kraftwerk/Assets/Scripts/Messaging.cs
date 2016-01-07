@@ -115,6 +115,7 @@ public class Messaging : MonoBehaviour {
     {
         if (fetchingFinished)
         {
+            Debug.Log("fetch Partners");
             fetchingFinished = false;
             partnerList = new List<ParseUser>(getPartners(ParseUser.CurrentUser));
             foreach (ParseUser partner in partnerList)
