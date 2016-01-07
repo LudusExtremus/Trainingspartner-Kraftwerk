@@ -105,9 +105,14 @@ public class NewsManagement : MonoBehaviour {
         Sprite image = template;
         ParseFile imageObject = news.Get<ParseFile>("image");
         string path = Application.persistentDataPath + "/" + news.ObjectId + FILENAME_NEWS_PIC;
+        bool updateExistingPic = false;
+        if (File.Exists(path))
+        {
+            updateExistingPic = DateTime.Compare(File.GetLastWriteTime(path), news.UpdatedAt.Value.AddHours(1)) < 0;
+        }
         if (imageObject != null)
         {
-            if (File.Exists(path))
+            if ((File.Exists(path))&&!updateExistingPic)
             {
                 var fileData = File.ReadAllBytes(path);
                 var tex = new Texture2D(2, 2);

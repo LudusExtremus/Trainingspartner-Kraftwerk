@@ -120,7 +120,8 @@ public class AppManagement : MonoBehaviour {
         StartCoroutine(checkInternetConnection((isConnected) => {
             if (!isConnected)
             {
-                showConnectionError();
+                if((!showTutorial)&&(!displayTutorial))
+                    showConnectionError();
             }
             else
             {

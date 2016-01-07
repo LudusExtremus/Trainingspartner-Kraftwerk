@@ -23,7 +23,7 @@ public class UserSearch : MonoBehaviour {
 
     public GameObject userSearchNotification;
 
-    public string currentSortValue = UserValues.LAST_LOGIN;
+    private string currentSortValue = UserValues.START_DATE;
     public Order sortOrder = Order.descending;
 
     public bool allowMultipleTimesAndCategories = false;
