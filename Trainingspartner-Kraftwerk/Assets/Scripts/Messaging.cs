@@ -157,7 +157,7 @@ public class Messaging : MonoBehaviour {
 
     void OnGUI()
     {
-        if (Event.current.keyCode == KeyCode.Return)
+        if (Event.current.Equals(Event.KeyboardEvent("return")))
         {
             sendMessage();
         }
