@@ -129,7 +129,8 @@ public class Messaging : MonoBehaviour {
         }
         else
         {
-            markNewMessageReceived(partnerId);
+            if(partner.ObjectId != partnerId)
+                markNewMessageReceived(partnerId);
         }
     }
 
