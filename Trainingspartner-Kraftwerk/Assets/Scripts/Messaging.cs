@@ -12,7 +12,7 @@ public class Messaging : MonoBehaviour {
 
     public int initialMessageLimit = 50;
     public int intervalTime = 10;
-    public int longIntervalTime = 60;
+    //public int longIntervalTime = 60;
 
     public GameObject conversationContentPanel;
     public GameObject conversationEntry;
@@ -244,9 +244,9 @@ public class Messaging : MonoBehaviour {
                 updateMessages();
 
 //TODO Remove when ios/windows phone notification works
-#if (!UNITY_ANDROID)
+//#if (!UNITY_ANDROID)
                 InvokeRepeating("updateMessages", start, intervalTime);
-#endif
+//##
 
             }
         } else
@@ -466,7 +466,7 @@ public class Messaging : MonoBehaviour {
                 }
             }
             foreach (GameObject go in userSearchButton)
-                foreach (Transform t in inboxButton.transform)
+                foreach (Transform t in go.transform)
                 {
                     if (t.gameObject.name.Equals("NewMessageIcon"))
                     {
