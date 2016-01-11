@@ -49,21 +49,21 @@ public class Messaging : MonoBehaviour {
 
     private Dictionary<string, GameObject> userConversations = new Dictionary<string, GameObject>();
 
-    private List<ParseUser> currentPartnerList;
+    private List<ParseUser> currentPartnerList = new List<ParseUser>();
+    private List<ParseUser> newMessagesFromPartners = new List<ParseUser>();
 
     void Start()
     {
         messageLimit = initialMessageLimit;
         //enterConversation(null);
         startFetchPartners();
-        StartCoroutine(fetchNewMessages());
     }
 
-    private IEnumerator fetchNewMessages()
+    private IEnumerator fetchNewMessagePartners()
     {
         Task fetchUserTask = ParseUser.CurrentUser.FetchAsync();
         while (!fetchUserTask.IsCompleted) yield return null;
-        List<ParseUser> newMessagesFromPartners = new List<ParseUser>(getUserList(ParseUser.CurrentUser, UserValues.NEW_MESSAGE_FROM));
+        newMessagesFromPartners = new List<ParseUser>(getUserList(ParseUser.CurrentUser, UserValues.NEW_MESSAGE_FROM));
         foreach (ParseUser user in newMessagesFromPartners)
         {
             markNewMessageReceived(user.ObjectId);
@@ -135,7 +135,31 @@ public class Messaging : MonoBehaviour {
 
     private void markNewMessageReceived(string partnerId)
     {
-        GameObject conversationGO = userConversations[partnerId];
+        if (userConversations.ContainsKey(partnerId))
+        {
+            foreach (Transform t in userConversations[partnerId].transform)
+            {
+                if (t.gameObject.name.Equals("NewMessageIcon"))
+                {
+                    t.gameObject.SetActive(true);
+                }
+            }
+        }
+        foreach(Transform t in inboxButton.transform)
+        {
+            if (t.gameObject.name.Equals("NewMessageIcon"))
+            {
+                t.gameObject.SetActive(true);
+            }
+        }
+        foreach(GameObject go in userSearchButton)
+        foreach (Transform t in inboxButton.transform)
+        {
+            if (t.gameObject.name.Equals("NewMessageIcon"))
+            {
+                t.gameObject.SetActive(true);
+            }
+        }
         //inboxButton;
         //userSearchButton;
     }
@@ -178,8 +202,8 @@ public class Messaging : MonoBehaviour {
             }
             currentPartnerList = partnerList;
             fillUserPartners(newPartners);
+            StartCoroutine(fetchNewMessagePartners());
             fetchingFinished = true;
-                
             //CancelInvoke("updateMessagesAllUsers");
             //InvokeRepeating("updateMessagesAllUsers", 0, longIntervalTime);
         }
@@ -274,6 +298,15 @@ public class Messaging : MonoBehaviour {
                     continue;
                 GameObject conversationGO = Instantiate(conversationEntry) as GameObject;
                 userConversations[partner.ObjectId] = conversationGO;
+                if(newMessagesFromPartners.Contains(partner))
+                    foreach (Transform t in conversationGO.transform)
+                    {
+                        if (t.gameObject.name.Equals("NewMessageIcon"))
+                        {
+                            t.gameObject.SetActive(true);
+                        }
+                    }
+
                 conversationGO.GetComponent<RectTransform>().SetParent(conversationContentPanel.GetComponent<RectTransform>(), false);
                 conversationGO.GetComponent<UserEntry>().setUser(partner);
                 foreach (RectTransform panel in conversationGO.GetComponent<RectTransform>())
@@ -398,7 +431,52 @@ public class Messaging : MonoBehaviour {
             chatField.GetComponent<InputField>().text = userTempEdit[partner.ObjectId];
         else
             chatField.GetComponent<InputField>().text = "";
+        foreach(ParseUser user in newMessagesFromPartners)
+        {
+            if (user.ObjectId.Equals(partner.ObjectId))
+            {
+                newMessagesFromPartners.Remove(user);
+                break;
+            }
+        }
+        ParseUser.CurrentUser[UserValues.NEW_MESSAGE_FROM] = newMessagesFromPartners;
+        ParseUser.CurrentUser.SaveAsync();
+        removeMarkerNewMessageReceived(partner.ObjectId);
         Debug.Log("enter conversation");
+    }
+
+    private void removeMarkerNewMessageReceived(string partnerId)
+    {
+        bool moreNewMessages = newMessagesFromPartners.Count > 0;
+        if (userConversations.ContainsKey(partnerId))
+        {
+            foreach (Transform t in userConversations[partnerId].transform)
+            {
+                if (t.gameObject.name.Equals("NewMessageIcon"))
+                {
+                    t.gameObject.SetActive(false);
+                }
+            }
+        }
+        if (!moreNewMessages)
+        {
+            foreach (Transform t in inboxButton.transform)
+            {
+                if (t.gameObject.name.Equals("NewMessageIcon"))
+                {
+                    t.gameObject.SetActive(false);
+                }
+            }
+            foreach (GameObject go in userSearchButton)
+                foreach (Transform t in inboxButton.transform)
+                {
+                    if (t.gameObject.name.Equals("NewMessageIcon"))
+                    {
+                        t.gameObject.SetActive(false);
+                    }
+                }
+        }
+        
     }
 
     IEnumerator saveCurrentUserInvokeUpdates(ParseUser partner, Task saveCurrentUserTask)
@@ -538,7 +616,10 @@ public class Messaging : MonoBehaviour {
         {
             createMessageObject(message);
         }
+        Canvas.ForceUpdateCanvases();
         messageScroller.verticalNormalizedPosition = 0;
+        Canvas.ForceUpdateCanvases();
+        //messageScroller.verticalNormalizedPosition = 0;
     }
 
     private void removeChatMessages()
