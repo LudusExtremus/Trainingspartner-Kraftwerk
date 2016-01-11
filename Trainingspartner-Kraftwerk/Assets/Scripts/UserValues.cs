@@ -38,6 +38,7 @@ public class UserValues : MonoBehaviour {
     public static readonly string LAST_LOGIN = "lastLogin";
     public static readonly string PICTURE = "picture";
     public static readonly string ACTIVE = "active";
+    public static readonly string NEW_MESSAGE_FROM = "newMessageFrom";
 
     [Tooltip("Don't edit! (Only linked Input Fields)")]
     public Value[] coreValues = {
@@ -48,7 +49,8 @@ public class UserValues : MonoBehaviour {
         new Value() { name = PARTNERS, type = FIELD_TYPE.TYPE_ParseUser, isList = true, isProfileRequirement = false, isSortOption = true},
         new Value() { name = LAST_LOGIN, type = FIELD_TYPE.TYPE_Date, isList = false, isProfileRequirement = false, isSortOption = true},
         new Value() { name = PICTURE, type = FIELD_TYPE.TYPE_ParseFile, isList = false, isProfileRequirement = false, isSortOption = true},
-        new Value() { name = ACTIVE, type = FIELD_TYPE.TYPE_boolean, isList = false, isProfileRequirement = false, isSortOption = true}
+        new Value() { name = ACTIVE, type = FIELD_TYPE.TYPE_boolean, isList = false, isProfileRequirement = false, isSortOption = true},
+        new Value() { name = NEW_MESSAGE_FROM, type = FIELD_TYPE.TYPE_ParseUser, isList = true, isProfileRequirement = false, isSortOption = false}
     };
 
 

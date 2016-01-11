@@ -32,6 +32,9 @@ public class Messaging : MonoBehaviour {
 
     public GameObject messagingButton;
 
+    public GameObject inboxButton;
+    public GameObject[] userSearchButton;
+
     private int messageLimit = 0;
     private ParseUser partner;
 
@@ -43,6 +46,9 @@ public class Messaging : MonoBehaviour {
 
     private Dictionary<string, IEnumerable<ParseObject>> userMessages = new Dictionary<string, IEnumerable<ParseObject>>();
     private Dictionary<string, string> userTempEdit = new Dictionary<string, string>();
+
+    private Dictionary<string, GameObject> userConversations = new Dictionary<string, GameObject>();
+
     private List<ParseUser> currentPartnerList;
 
     void Start()
@@ -50,6 +56,18 @@ public class Messaging : MonoBehaviour {
         messageLimit = initialMessageLimit;
         //enterConversation(null);
         startFetchPartners();
+        StartCoroutine(fetchNewMessages());
+    }
+
+    private IEnumerator fetchNewMessages()
+    {
+        Task fetchUserTask = ParseUser.CurrentUser.FetchAsync();
+        while (!fetchUserTask.IsCompleted) yield return null;
+        List<ParseUser> newMessagesFromPartners = new List<ParseUser>(getUserList(ParseUser.CurrentUser, UserValues.NEW_MESSAGE_FROM));
+        foreach (ParseUser user in newMessagesFromPartners)
+        {
+            markNewMessageReceived(user.ObjectId);
+        }
     }
 
     public void startFetchPartners()
@@ -96,7 +114,7 @@ public class Messaging : MonoBehaviour {
 
     public void setPartner(string partnerId)
     {
-        if (lastMenuState != MenuState.create_message)
+        if ((lastMenuState != MenuState.create_message)&&(lastMenuState != MenuState.search))
         {
             foreach (ParseUser partner in partnerList)
             {
@@ -109,6 +127,17 @@ public class Messaging : MonoBehaviour {
                 }
             }
         }
+        else
+        {
+            markNewMessageReceived(partnerId);
+        }
+    }
+
+    private void markNewMessageReceived(string partnerId)
+    {
+        GameObject conversationGO = userConversations[partnerId];
+        //inboxButton;
+        //userSearchButton;
     }
 
     IEnumerator fetchUserPartners()
@@ -117,7 +146,7 @@ public class Messaging : MonoBehaviour {
         {
             Debug.Log("fetch Partners");
             fetchingFinished = false;
-            partnerList = new List<ParseUser>(getPartners(ParseUser.CurrentUser));
+            partnerList = new List<ParseUser>(getUserList(ParseUser.CurrentUser, UserValues.PARTNERS));
             foreach (ParseUser partner in partnerList)
             {
                 Task userFetchTask = partner.FetchIfNeededAsync();
@@ -150,6 +179,7 @@ public class Messaging : MonoBehaviour {
             currentPartnerList = partnerList;
             fillUserPartners(newPartners);
             fetchingFinished = true;
+                
             //CancelInvoke("updateMessagesAllUsers");
             //InvokeRepeating("updateMessagesAllUsers", 0, longIntervalTime);
         }
@@ -190,7 +220,12 @@ public class Messaging : MonoBehaviour {
                 int start = messagesRestored ? intervalTime : 1;
                 //CancelInvoke("updateMessagesAllUsers");
                 updateMessages();
+
+//TODO Remove when ios/windows phone notification works
+#if (!UNITY_ANDROID)
                 InvokeRepeating("updateMessages", start, intervalTime);
+#endif
+
             }
         } else
         {
@@ -238,6 +273,7 @@ public class Messaging : MonoBehaviour {
                 if ((partner == null) || (!partner.ContainsKey(UserValues.NICK)))
                     continue;
                 GameObject conversationGO = Instantiate(conversationEntry) as GameObject;
+                userConversations[partner.ObjectId] = conversationGO;
                 conversationGO.GetComponent<RectTransform>().SetParent(conversationContentPanel.GetComponent<RectTransform>(), false);
                 conversationGO.GetComponent<UserEntry>().setUser(partner);
                 foreach (RectTransform panel in conversationGO.GetComponent<RectTransform>())
@@ -334,13 +370,13 @@ public class Messaging : MonoBehaviour {
         return false;
     }
 
-    private static List<ParseUser> getPartners(ParseUser user)
+    private static List<ParseUser> getUserList(ParseUser user, string userValue)
     {
         List<ParseUser> partners = null;
-        if (user[UserValues.PARTNERS].GetType() == typeof(List<object>))
-            partners = user.Get<List<object>>(UserValues.PARTNERS).Select(u => (ParseUser)u).ToList();
+        if (user[userValue].GetType() == typeof(List<object>))
+            partners = user.Get<List<object>>(userValue).Select(u => (ParseUser)u).ToList();
         else
-            partners = user.Get<List<ParseUser>>(UserValues.PARTNERS).Select(u => (ParseUser)u).ToList();
+            partners = user.Get<List<ParseUser>>(userValue).Select(u => (ParseUser)u).ToList();
         return partners;
     }
 

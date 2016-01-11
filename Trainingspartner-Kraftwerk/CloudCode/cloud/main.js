@@ -26,11 +26,26 @@ Parse.Cloud.afterSave("Message", function(request,response) {
 	
 // Creates a pointer to _User with object id of userId
 var targetUser = request.object.get('receiver');
+var sendingUser = request.object.get('sender');
 var msg = request.object.get("message_text");
 var pushQuery = new Parse.Query(Parse.Installation);
 pushQuery.equalTo('user', targetUser);
 
-request.object.get('sender').fetch().then(function(user) {
+request.object.get('receiver').fetch().then(function(receiver) {
+	Parse.Cloud.useMasterKey();
+			var newMessageFrom = receiver.get('newMessageFrom');
+	
+	for(var i = 0; i < newMessageFrom.length; i++) {
+    if (newMessageFrom[i].toString() === sendingUser.toString()) {
+        return;
+		}
+	}
+			newMessageFrom.push(sendingUser);
+			receiver.set("newMessageFrom", newMessageFrom);
+            return receiver.save();
+        });
+
+		request.object.get('sender').fetch().then(function(user) {
             var sender = user.get('nick');
 			var userid = request.object.get('sender').id;
             // Send push notification to query
