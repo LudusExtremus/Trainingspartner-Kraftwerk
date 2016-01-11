@@ -153,15 +153,13 @@ public class Messaging : MonoBehaviour {
             }
         }
         foreach(GameObject go in userSearchButton)
-        foreach (Transform t in inboxButton.transform)
-        {
-            if (t.gameObject.name.Equals("NewMessageIcon"))
+            foreach (Transform t in go.transform)
             {
-                t.gameObject.SetActive(true);
+                if (t.gameObject.name.Equals("NewMessageIcon"))
+                {
+                    t.gameObject.SetActive(true);
+                }
             }
-        }
-        //inboxButton;
-        //userSearchButton;
     }
 
     IEnumerator fetchUserPartners()
