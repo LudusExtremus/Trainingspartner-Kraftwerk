@@ -148,16 +148,16 @@ public class UserManagement : MonoBehaviour
 
         if (deleteUserBool == true) {
             deleteUser();
-        }
-
-
-        firstLogin();
+        } 
         //registerNewUser();
-
-
         if (pleaseLogout == true)
         {
             logout();
+        }
+
+        if ((!deleteUserBool) && (!pleaseLogout))
+        {
+            firstLogin();
         }
     }
 
