@@ -12,6 +12,8 @@ using ImageVideoContactPicker;
 
 public class UserManagement : MonoBehaviour
 {
+    public bool pleaseLogout = false;
+    public bool deleteUserBool = false;
     public GameObject userNickInput;
     public GameObject userClimbGradeInput;
     public GameObject userTrainingStartInput;
@@ -141,11 +143,20 @@ public class UserManagement : MonoBehaviour
     {
         //updateTimeTable(times);
         //queryTimeTable();
-        //deleteUser();
-       
+
+        if (deleteUserBool == true) {
+            deleteUser();
+        }
+
+
         firstLogin();
         //registerNewUser();
-        //logout();
+
+
+        if (pleaseLogout == true)
+        {
+            logout();
+        }
     }
 
     void OnGUI()
