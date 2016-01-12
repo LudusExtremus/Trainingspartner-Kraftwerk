@@ -78,7 +78,7 @@ public class UserSearch : MonoBehaviour {
                  TimeSpan span = DateTime.Now - lastActiveDate;
                  int diffInDays = span.Days;
                  bool userIsActiveByLogin = diffInDays <= timeSpanDaysUserNotActive;
-
+                 Debug.Log(user["nick"] + " span " + span);
             if ((user.ObjectId == ParseUser.CurrentUser.ObjectId) || (!userSetActive)|| (!userIsActiveByLogin))
                 continue;
             List<string> cats = user.Get<List<object>>(UserValues.CATEGORIES).Select(s => (string)s).ToList();

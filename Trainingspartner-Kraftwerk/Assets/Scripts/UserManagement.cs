@@ -25,7 +25,9 @@ public class UserManagement : MonoBehaviour
     public GameObject timeTogglePanel;
 
     public GameObject profileUpdateNotification;
+    [Tooltip("in Seconds")]
     public int notificationTime = 2;
+    [Tooltip("in Seconds")]
     public int notificationDelay = 4;
 
     List<string> times = new List<string>() { "Mon_Mor", "Mon_Eve", "Mon_Noon", "Tue_Mor", "Tue_Eve", "Tue_Noon", "Wed_Mor", "Wed_Eve", "Wed_Noon", "Thu_Mor", "Thu_Eve", "Thu_Noon", "Fri_Mor", "Fri_Eve", "Fri_Noon", "Sat_Mor", "Sat_Eve", "Sat_Noon", "Sun_Mor", "Sun_Eve", "Sun_Noon" };
