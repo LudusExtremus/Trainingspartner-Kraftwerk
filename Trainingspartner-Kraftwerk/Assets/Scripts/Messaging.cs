@@ -10,7 +10,9 @@ using System.IO;
 
 public class Messaging : MonoBehaviour {
 
+    [Tooltip("in Seconds")]
     public int initialMessageLimit = 50;
+    [Tooltip("in Seconds")]
     public int intervalTime = 10;
     //public int longIntervalTime = 60;
 
@@ -28,6 +30,7 @@ public class Messaging : MonoBehaviour {
     public ScrollRect messageScroller;
 
     public GameObject noPartnersNotification;
+    [Tooltip("in Seconds")]
     public int notificationTime = 3;
 
     public GameObject messagingButton;
