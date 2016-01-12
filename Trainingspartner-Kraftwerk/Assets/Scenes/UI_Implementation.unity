@@ -4995,7 +4995,9 @@ MonoBehaviour:
   otherStates: 0a0000000b0000000c0000000d0000000e0000000f00000010000000
   searchStates: 010000000000000002000000
   createMsgStates: 03000000
-  notificationNoInternet: {fileID: 0}
+  notificationNoInternet: {fileID: 1312736247}
+  splashScreen: {fileID: 1629347103}
+  splascScreenTime: 2
 --- !u!114 &560292778
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8465,6 +8467,10 @@ MonoBehaviour:
 GameObject:
   m_PrefabParentObject: {fileID: 114758, guid: 104cdd6eb36482f44baee5df7236ad9f, type: 2}
   m_PrefabInternal: {fileID: 827590775}
+--- !u!1 &1312736247 stripped
+GameObject:
+  m_PrefabParentObject: {fileID: 129736, guid: 3f2ccc53d72ec724eba95aaadd019488, type: 2}
+  m_PrefabInternal: {fileID: 1484472236}
 --- !u!1 &1333964713
 GameObject:
   m_ObjectHideFlags: 0
@@ -8934,6 +8940,14 @@ Prefab:
     - target: {fileID: 22413830, guid: 3f2ccc53d72ec724eba95aaadd019488, type: 2}
       propertyPath: m_Pivot.y
       value: .5
+      objectReference: {fileID: 0}
+    - target: {fileID: 11410500, guid: 3f2ccc53d72ec724eba95aaadd019488, type: 2}
+      propertyPath: onChangeEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 560292777}
+    - target: {fileID: 11410500, guid: 3f2ccc53d72ec724eba95aaadd019488, type: 2}
+      propertyPath: onChangeEvent.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: restartApp
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 3f2ccc53d72ec724eba95aaadd019488, type: 2}
@@ -9416,6 +9430,10 @@ CanvasRenderer:
     type: 2}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1601158306}
+--- !u!1 &1629347103 stripped
+GameObject:
+  m_PrefabParentObject: {fileID: 191794, guid: 3f2ccc53d72ec724eba95aaadd019488, type: 2}
+  m_PrefabInternal: {fileID: 1484472236}
 --- !u!1 &1645790931
 GameObject:
   m_ObjectHideFlags: 0

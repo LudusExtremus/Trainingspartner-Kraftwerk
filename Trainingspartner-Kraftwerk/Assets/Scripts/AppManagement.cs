@@ -27,6 +27,9 @@ public class AppManagement : MonoBehaviour {
     public List<MenuState> createMsgStates;
 
     public GameObject notificationNoInternet;
+    public GameObject splashScreen;
+    [Tooltip("in Seconds")]
+    public int splascScreenTime = 2;
 
     private MenuState lastTopState = MenuState.info;
     private MenuState currentMenuState = MenuState.info;
@@ -104,6 +107,7 @@ public class AppManagement : MonoBehaviour {
     // Use this for initialization
     void Start () {
         bool showTutorial = true;
+        
         if (PlayerPrefs.HasKey("tutorial_viewed"))
         {
             showTutorial = PlayerPrefs.GetInt("tutorial_viewed") == 0;
@@ -115,8 +119,11 @@ public class AppManagement : MonoBehaviour {
         {
             currentMenuState = MenuState.info;
         }
-            
+
+        StartCoroutine(deactivateSplashScreen());
+
         changeMenuState(currentMenuState);
+
         StartCoroutine(checkInternetConnection((isConnected) => {
             if (!isConnected)
             {
@@ -132,8 +139,15 @@ public class AppManagement : MonoBehaviour {
         
 	}
 
+    private IEnumerator deactivateSplashScreen()
+    {
+        yield return new WaitForSeconds(splascScreenTime);
+        splashScreen.SetActive(false);
+    }
+
     public void restartApp()
     {
+        splashScreen.SetActive(true);
         Debug.Log("RESTART ...");
         notificationNoInternet.SetActive(false);
         Application.LoadLevel(0);
