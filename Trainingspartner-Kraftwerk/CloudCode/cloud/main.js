@@ -35,6 +35,9 @@ request.object.get('receiver').fetch().then(function(receiver) {
 	Parse.Cloud.useMasterKey();
 			var newMessageFrom = receiver.get('newMessageFrom');
 	
+	if(newMessageFrom == undefined)
+		newMessageFrom = new Array();
+	
 	for(var i = 0; i < newMessageFrom.length; i++) {
     if (newMessageFrom[i].toString() === sendingUser.toString()) {
         return;
